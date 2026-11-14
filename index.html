@@ -2,114 +2,153 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Abandoned, Not Forgotten</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<meta name="description" content="An interactive documentary about NASA's Phoenix and InSight landers on Mars.">
+<meta name="theme-color" content="#0B0D14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Allinol">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/icons/icon-192.png">
 <style>
+  /* Palette: two main colors + one accent. */
   :root{
-    --bg:#05060c; --ink:#f4f1ea; --muted:#a3a8bf; --accent:#ff8a3d; --accent-ink:#1a0b04;
-    --bar:#11142a; --line:#262b4a; --panel:#f6f1e4; --panel-ink:#1c1b26; --link:#b13a0e;
+    --ink:#0B0D14;          /* space black, a little navy in it */
+    --paper:#F2F0EA;        /* paper white, a little warm */
+    --red:#FC3D21;          /* NASA red: the only accent */
+    --paper-70:rgba(242,240,234,.7); --paper-40:rgba(242,240,234,.4); --paper-15:rgba(242,240,234,.15);
+    --ink-70:rgba(11,13,20,.7); --ink-20:rgba(11,13,20,.2);
+    --text:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    --display:"Arial Black","Helvetica Neue",Helvetica,Arial,sans-serif;
   }
-  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#05060c; } }
-  :root[data-theme="dark"]{ --bg:#05060c; }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ink:#0B0D14; } }
+  :root[data-theme="dark"]{ --ink:#0B0D14; }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Baloo 2",system-ui,sans-serif;overflow:hidden}
-  #app{position:fixed;inset:0;display:flex;flex-direction:column}
+  html,body{margin:0;height:100%;background:var(--ink);color:var(--paper);font-family:var(--text);overflow:hidden;-webkit-text-size-adjust:100%}
+  #app{position:fixed;inset:0;height:100dvh;display:flex;flex-direction:column;background:var(--ink);
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
   #viewport{flex:1;position:relative;overflow:hidden}
   #stageWrap{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center center}
-  #stage{position:absolute;inset:0;width:1920px;height:1080px;background:#000;border-radius:4px}
+  #stage{position:absolute;inset:0;width:1920px;height:1080px;background:#000;display:block}
   #stage.hot{cursor:pointer}
-  .chip{position:absolute;transform:translate(-50%,-50%);font:800 30px "Baloo 2",sans-serif;padding:10px 30px;border:0;border-radius:999px;
-    background:var(--accent);color:var(--accent-ink);cursor:pointer;box-shadow:0 8px 0 #a8461a;display:none;white-space:nowrap}
-  .chip:hover{filter:brightness(1.08)}
-  #endPanel{position:absolute;left:50%;top:958px;transform:translate(-50%,-50%);display:none;gap:14px;flex-wrap:wrap;justify-content:center;width:1700px}
-  #endPanel button{font:800 28px "Baloo 2",sans-serif;padding:8px 26px;border-radius:999px;border:2px solid rgba(255,255,255,.25);background:rgba(10,12,30,.85);color:#fff;cursor:pointer}
-  #endPanel button:hover{border-color:var(--accent)}
-  #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;background:rgba(3,4,10,.82);z-index:5;text-align:center}
-  #overlay h1{margin:0;font-size:96px;line-height:1;letter-spacing:4px}
-  #overlay h1 span{color:var(--accent)}
-  #overlay p{margin:0;font-size:32px;color:var(--muted)}
-  #overlay button{font:800 60px "Baloo 2",sans-serif;padding:16px 74px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);cursor:pointer;box-shadow:0 10px 0 #a8461a}
-  #overlay button:disabled{opacity:.45;cursor:wait}
-  #modal{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.66);z-index:6}
-  #modal .box{position:relative;width:1300px;max-height:960px;overflow:auto;background:var(--panel);color:var(--panel-ink);border-radius:22px;padding:44px 56px;font-size:30px;line-height:1.4}
-  #modal h3{margin:0 0 14px;font-size:56px;line-height:1.1}
-  #modal a{color:var(--link)}
-  #modal .close{position:absolute;right:22px;top:16px;font:800 30px "Baloo 2";border:0;background:#1c1b26;color:#fff;border-radius:999px;padding:6px 24px;cursor:pointer}
-  .info{display:grid;grid-template-columns:520px 1fr;gap:36px;align-items:start}
-  .info img{width:100%;border-radius:10px;display:block}
-  .kind{display:inline-block;padding:2px 14px;border-radius:8px;color:#fff;font-size:22px;font-weight:800;letter-spacing:1px}
-  .kind.real{background:#1f8a4c}.kind.ill{background:#c2410c}.kind.data{background:#2563eb}
-  .muted{color:#5b5a68;font-size:24px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
-  .cmp{position:relative;border-radius:12px;overflow:hidden;background:#000;user-select:none}
+  button{font-family:var(--text)}
+  .chip{position:absolute;transform:translate(-50%,-50%);font:700 26px var(--text);letter-spacing:.08em;text-transform:uppercase;padding:14px 26px;
+    border:2px solid var(--paper);border-radius:0;background:var(--ink-70);color:var(--paper);cursor:pointer;display:none;white-space:nowrap}
+  .chip:hover,.chip:focus-visible{border-color:var(--red);outline:none}
+  #endPanel{position:absolute;left:96px;right:96px;top:960px;display:none;gap:12px;flex-wrap:wrap;justify-content:center}
+  #endPanel button{font:700 24px var(--text);letter-spacing:.06em;text-transform:uppercase;padding:12px 22px;border:2px solid var(--paper-40);border-radius:0;background:var(--ink);color:var(--paper);cursor:pointer}
+  #endPanel button:hover,#endPanel button:focus-visible{border-color:var(--red);outline:none}
+  #overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;padding:0 96px;background:rgba(11,13,20,.94);z-index:5}
+  #overlay .rule{width:120px;height:8px;background:var(--red);margin-bottom:40px}
+  #overlay h1{margin:0;font:800 104px/1.02 var(--display);letter-spacing:.01em;text-transform:uppercase;color:var(--paper)}
+  #overlay p{margin:28px 0 0;font:400 34px/1.35 var(--text);color:var(--paper-70);max-width:1100px}
+  #overlay .row{display:flex;align-items:center;gap:32px;margin-top:56px}
+  #overlay button{font:700 34px var(--text);letter-spacing:.1em;text-transform:uppercase;padding:22px 64px;border:0;border-radius:0;background:var(--red);color:var(--ink);cursor:pointer}
+  #overlay button:disabled{background:var(--paper-15);color:var(--paper-40);cursor:wait}
+  #overlay .hint{margin:0;font:400 26px var(--text);color:var(--paper-40)}
+  #rotateHint{position:absolute;left:0;right:0;top:0;padding:14px 18px;background:var(--red);color:var(--ink);font:700 15px var(--text);letter-spacing:.06em;text-transform:uppercase;display:none;z-index:8;justify-content:space-between;align-items:center;gap:10px}
+  #rotateHint button{font:700 14px var(--text);border:2px solid var(--ink);background:transparent;color:var(--ink);padding:4px 10px;border-radius:0;cursor:pointer}
+  #modal{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(11,13,20,.8);z-index:6}
+  #modal .box{position:relative;width:1340px;max-height:960px;overflow:auto;background:var(--paper);color:var(--ink);border-radius:0;padding:56px 64px;font:400 28px/1.45 var(--text)}
+  #modal h3{margin:0 0 18px;font:700 52px/1.1 var(--text);letter-spacing:-.01em}
+  #modal a{color:var(--ink);text-decoration-color:var(--red);text-decoration-thickness:3px;text-underline-offset:4px}
+  #modal .close{position:absolute;right:24px;top:22px;font:700 20px var(--text);letter-spacing:.1em;text-transform:uppercase;border:2px solid var(--ink);background:transparent;color:var(--ink);border-radius:0;padding:8px 18px;cursor:pointer}
+  #modal .close:hover{background:var(--ink);color:var(--paper)}
+  .info{display:grid;grid-template-columns:540px 1fr;gap:44px;align-items:start}
+  .info img,.info video{width:100%;display:block;border:1px solid var(--ink-20)}
+  .kind{display:inline-block;padding:4px 10px;font:700 16px var(--text);letter-spacing:.14em;border:2px solid var(--ink);color:var(--ink)}
+  .kind.ill{background:var(--red);border-color:var(--red)}
+  .fig{font:700 18px var(--text);letter-spacing:.12em;color:var(--red);margin-left:12px}
+  .muted{color:rgba(11,13,20,.62);font-size:22px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+  .cmp{position:relative;overflow:hidden;background:#000;user-select:none;border:1px solid var(--ink-20)}
   .cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-  .cmp input{position:absolute;left:0;right:0;bottom:12px;width:90%;margin:0 5%;accent-color:var(--accent)}
-  .cmp .lab{position:absolute;top:10px;padding:2px 12px;border-radius:8px;background:rgba(0,0,0,.65);color:#fff;font-size:22px;font-weight:800}
-  .cmp .divider{position:absolute;top:0;bottom:0;width:4px;background:#fff;box-shadow:0 0 8px #000}
-  table.cmpt{width:100%;border-collapse:collapse;font-size:26px}
-  table.cmpt th,table.cmpt td{border-bottom:1px solid #d9d2c1;padding:8px 10px;text-align:left;vertical-align:top}
-  table.cmpt th{font-size:28px}
-  table.cmpt td:first-child{color:#5b5a68;font-weight:700;width:260px}
-  .menu{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px}
-  .menu button{font:800 32px "Baloo 2";padding:22px 16px;border-radius:18px;border:3px solid #1c1b26;background:#fff;color:#1c1b26;cursor:pointer}
-  .menu button:hover{background:#ffe6d5}
-  #digc{width:100%;border-radius:12px;display:block;touch-action:none;cursor:crosshair;background:#000}
-  .digbar{display:flex;align-items:center;gap:20px;margin-top:14px}
+  .cmp input{position:absolute;left:5%;right:5%;bottom:14px;width:90%;accent-color:var(--red)}
+  .cmp .lab{position:absolute;top:12px;padding:3px 10px;background:var(--ink);color:var(--paper);font:700 16px var(--text);letter-spacing:.1em;text-transform:uppercase}
+  .cmp .divider{position:absolute;top:0;bottom:0;width:3px;background:var(--paper)}
+  table.cmpt{width:100%;border-collapse:collapse;font-size:24px}
+  table.cmpt th,table.cmpt td{border-bottom:1px solid var(--ink-20);padding:10px 12px;text-align:left;vertical-align:top}
+  table.cmpt th{font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:20px;border-bottom:3px solid var(--ink)}
+  table.cmpt td:first-child{color:rgba(11,13,20,.62);width:260px}
+  .menu{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:22px;border-top:3px solid var(--ink)}
+  .menu button{font:700 26px var(--text);text-align:left;padding:26px 22px;border:0;border-bottom:1px solid var(--ink-20);background:transparent;color:var(--ink);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+  .menu button::after{content:"→";color:var(--red)}
+  .menu button:hover{background:rgba(11,13,20,.06)}
+  #digc{width:100%;display:block;touch-action:none;cursor:crosshair;background:#000}
+  .digbar{display:flex;align-items:center;gap:20px;margin-top:16px}
   .digbar span{flex:1}
-  .digbar button,.pbtn{font:800 30px "Baloo 2";padding:8px 28px;border-radius:999px;border:0;background:var(--accent);color:var(--accent-ink);cursor:pointer}
-  .digbar button:disabled{opacity:.4;cursor:not-allowed}
-  .layers{display:grid;grid-template-columns:560px 1fr;gap:36px;align-items:center}
-  .layers circle{cursor:pointer;stroke:#1c1b26;stroke-width:3}
-  .layers circle:hover{filter:brightness(1.15)}
-  ul.src{font-size:22px;line-height:1.5;padding-left:28px}
-  .progress{width:100%;height:22px;border-radius:999px;background:#ddd5c4;overflow:hidden}
-  .progress div{height:100%;width:0;background:var(--accent)}
-  #bar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bar);border-top:1px solid var(--line);font-size:15px}
-  #bar button,#bar select{font:700 15px "Baloo 2",sans-serif;background:#232744;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;cursor:pointer;white-space:nowrap}
-  #bar button[aria-pressed="false"]{opacity:.5}
-  #seek{flex:1;accent-color:var(--accent);min-width:80px}
-  #time{font-variant-numeric:tabular-nums;color:var(--muted);min-width:96px;text-align:right}
-  @media (max-width:700px){ #bar{flex-wrap:wrap} #seek{order:-1;flex-basis:100%} #chapters{max-width:130px} }
+  .pbtn,.digbar button{font:700 22px var(--text);letter-spacing:.1em;text-transform:uppercase;padding:12px 26px;border:0;border-radius:0;background:var(--red);color:var(--ink);cursor:pointer}
+  .digbar button:disabled{background:var(--ink-20);color:rgba(11,13,20,.4);cursor:not-allowed}
+  .layers{display:grid;grid-template-columns:560px 1fr;gap:44px;align-items:center}
+  .layers circle{cursor:pointer}
+  .layers circle:hover{opacity:.85}
+  ul.src{font-size:20px;line-height:1.5;padding-left:24px}
+  .progress{width:100%;height:12px;background:var(--ink-20)}
+  .progress div{height:100%;width:0;background:var(--red)}
+  #bar{display:flex;align-items:center;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--ink);border-top:1px solid var(--paper-15);font-size:14px;transition:transform .25s ease, opacity .25s ease}
+  #bar button,#bar select{font:700 13px var(--text);letter-spacing:.06em;text-transform:uppercase;background:transparent;color:var(--paper);border:1px solid var(--paper-40);border-radius:0;padding:8px 11px;cursor:pointer;white-space:nowrap;min-height:36px}
+  #bar select{text-transform:none;letter-spacing:0;font-weight:400;max-width:260px}
+  #bar #playBtn{background:var(--red);border-color:var(--red);color:var(--ink);min-width:84px}
+  #bar button[aria-pressed="false"]{opacity:.45}
+  #bar button:hover,#bar select:hover{border-color:var(--paper)}
+  #seek{flex:1;accent-color:var(--red);min-width:80px}
+  #time{font-variant-numeric:tabular-nums;color:var(--paper-70);min-width:92px;text-align:right}
+  body.immersive #app{padding:0}
+  body.immersive #bar{position:absolute;left:0;right:0;bottom:0;z-index:7;background:rgba(11,13,20,.9)}
+  body.immersive.idle #bar{transform:translateY(100%);opacity:0;pointer-events:none}
+  body.immersive.idle #viewport{cursor:none}
+  @media (max-width:900px){ #bar{flex-wrap:wrap} #seek{order:-1;flex-basis:100%} #chapters{max-width:150px} }
+  /* phones held sideways: one slim row so the picture gets the height */
+  @media (max-height:520px){
+    #bar{flex-wrap:nowrap;gap:6px;padding:6px 10px calc(6px + env(safe-area-inset-bottom))}
+    #seek{order:0;flex-basis:auto}
+    #restartBtn,#chapters,#exportBtn,#time{display:none}
+    #bar button{padding:6px 9px;min-height:32px;font-size:12px}
+    #bar #playBtn{min-width:64px}
+  }
 </style>
 </head>
 <body>
 <div id="app">
   <div id="viewport">
+    <div id="rotateHint"><span>Turn your phone sideways for the full picture</span><button id="rotateOk">OK</button></div>
     <div id="stageWrap">
       <canvas id="stage" width="1920" height="1080"></canvas>
-      <button class="chip" id="chipDig" style="left:1560px;top:880px">⛏ Dig like Phoenix</button>
-      <button class="chip" id="chipQuake" style="left:1150px;top:875px">🎧 Watch the full 30 s clip</button>
-      <button class="chip" id="chipLayers" style="left:1290px;top:870px">🌍 Explore inside Mars</button>
+      <button class="chip" id="chipDig" style="left:1580px;top:880px">Try it: dig like Phoenix</button>
+      <button class="chip" id="chipQuake" style="left:1444px;top:830px">Watch the full 30 s clip</button>
+      <button class="chip" id="chipLayers" style="left:1292px;top:880px">Explore inside Mars</button>
       <div id="endPanel">
-        <button data-open="dig">⛏ Dig like Phoenix</button>
-        <button data-open="then">🕰 Then &amp; now</button>
-        <button data-open="layers">🌍 Inside Mars</button>
-        <button data-open="compare">📊 Compare the twins</button>
-        <button data-open="quake">🎧 Hear the marsquake</button>
-        <button data-open="sources">📚 Sources</button>
+        <button data-open="dig">Dig like Phoenix</button>
+        <button data-open="then">Then and now</button>
+        <button data-open="layers">Inside Mars</button>
+        <button data-open="compare">Compare the twins</button>
+        <button data-open="quake">Hear the marsquake</button>
+        <button data-open="sources">Sources</button>
       </div>
       <div id="overlay">
-        <h1>ABANDONED, <span>BUT NOT FORGOTTEN</span></h1>
-        <p id="loadMsg">Loading pictures, voices and videos…</p>
-        <button id="startBtn" disabled>▶ Play</button>
-        <p style="font-size:24px">Click any photo for its story · ⛏ 🌍 🎧 extras along the way</p>
+        <div class="rule"></div>
+        <h1>Abandoned,<br>but not forgotten</h1>
+        <p>Two NASA landers went silent on Mars. This is the story of Phoenix and InSight, and of what they found.</p>
+        <div class="row"><button id="startBtn" disabled>Play</button><p class="hint" id="loadMsg">Loading…</p></div>
+        <p class="hint" style="margin-top:28px">Click any photo for its story. Full screen button below.</p>
       </div>
-      <div id="modal"><div class="box"><button class="close" id="modalClose">Close ✕</button><div id="modalBody"></div></div></div>
+      <div id="modal" role="dialog" aria-modal="true"><div class="box"><button class="close" id="modalClose">Close</button><div id="modalBody"></div></div></div>
     </div>
   </div>
   <div id="bar">
-    <button id="playBtn">▶ Oynat</button>
-    <button id="restartBtn">⟲ Baştan</button>
-    <input id="seek" type="range" min="0" max="200" step="0.01" value="0" aria-label="Zaman çizelgesi">
+    <button id="playBtn">Play</button>
+    <button id="restartBtn">Restart</button>
+    <input id="seek" type="range" min="0" max="200" step="0.01" value="0" aria-label="Timeline">
     <span id="time">0:00 / 0:00</span>
-    <select id="chapters" aria-label="Bölümler"></select>
-    <button id="ccBtn" aria-pressed="true">CC Altyazı</button>
-    <button id="soundBtn" aria-pressed="true">🔊 Ses</button>
-    <button id="exploreBtn">✨ Keşfet</button>
-    <button id="exportBtn">⬇ MP4 dışa aktar</button>
+    <select id="chapters" aria-label="Chapters"></select>
+    <button id="ccBtn" aria-pressed="true">Subtitles</button>
+    <button id="soundBtn" aria-pressed="true">Sound</button>
+    <button id="exploreBtn">Explore</button>
+    <button id="fsBtn">Full screen</button>
+    <button id="exportBtn" hidden>Export MP4</button>
   </div>
 </div>
 
@@ -120,9 +159,18 @@
    Allinol — "Abandoned, but not forgotten": Phoenix & InSight
    One canvas renderer drives both the interactive page and the 1920x1080 60fps
    MP4 export, so everything on screen is a pure function of the time t.
+   Design: mission-archive style. Ink + paper, NASA red as the only accent.
+   Arial Black for display type, Helvetica for everything else.
    ========================================================================== */
 const W = 1920, H = 1080, FPS = 60;
 const $ = id => document.getElementById(id);
+
+/* ---------------- design tokens ---------------- */
+const INK = '#0B0D14', PAPER = '#F2F0EA', RED = '#FC3D21', RED_DEEP = '#90271B';
+const pa = a => `rgba(242,240,234,${a})`, ia = a => `rgba(11,13,20,${a})`, ra = a => `rgba(252,61,33,${a})`;
+const F_TEXT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+const F_DISP = '"Arial Black", "Helvetica Neue", Helvetica, Arial, sans-serif';
+const M = 96, R = W - 96;                 // page margins (12-column grid inside)
 
 /* ---------------- math helpers ---------------- */
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
@@ -133,19 +181,19 @@ const E = {
   out: x => 1 - Math.pow(1 - x, 3),
   in: x => x * x * x,
   io: x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2,
-  back: x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); },
 };
-const appear = (c, at, d = .45) => E.out(ramp(c, at, at + d));
-const popS = (c, at, d = .5) => c < at ? 0 : E.back(ramp(c, at, at + d));
+const appear = (c, at, d = .5) => E.out(ramp(c, at, at + d));
 const win = (c, a, b, f = .35) => Math.min(ramp(c, a, a + f), 1 - ramp(c, b - f, b));
+const rise = (c, at, d = .5) => { const p = E.out(ramp(c, at, at + d)); return {a: p, dy: (1 - p) * 24}; };
 function rng(seed) { let s = (seed >>> 0) || 1; return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296; }
 const fmtTime = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const pad2 = n => String(n).padStart(2, '0');
 
 /* ---------------- content ---------------- */
 const HELLO_AT = 2.47;      // the hello recording starts 2.47 s into the team intro (waveforms match)
 const QUAKE_FROM = 3.0, LISTEN_DUR = 10.0, ENDCARD_DUR = 8.0, XF = .45;
 const VOICE_GAIN = 1.25, QUAKE_GAIN = .55;
-const BX = 170, BY = 905, BR = 112, BS = 262;   // "Allinol cam" badge
+const BX = 192, BY = 936, BR = 96, BS = 226;   // "Allinol cam" badge, bottom-left on the grid
 
 // d = length the timings below were measured on; if a clip is re-recorded, its
 // timings are stretched to the new length automatically.
@@ -178,7 +226,6 @@ const CLIPS = {
 };
 
 const KIND = {real: 'REAL PHOTO', ill: 'ILLUSTRATION', data: 'REAL DATA'};
-const KIND_COLOR = {real: '#1f8a4c', ill: '#c2410c', data: '#2563eb'};
 const nasa = id => `https://images.nasa.gov/details/${id}`;
 const IMGS = {
   'insight-art':      {f:'insight-art.jpg', id:'PIA22228', kind:'ill', credit:'NASA/JPL-Caltech', title:'InSight on the Surface of Mars', date:'Artist’s illustration (2018)', desc:'An artist’s illustration of the InSight lander working on Mars, with its two round solar panels open.'},
@@ -217,6 +264,11 @@ const VIDEOS = {
   quake: {f:'assets/video/marsquake.mp4', id:'PIA25281', kind:'data', credit:'NASA/JPL-Caltech', title:'Seismogram and Sonification of InSight’s Big Martian Quake', date:'May 4, 2022 (sol 1,222)', desc:'An estimated magnitude 5 marsquake, the biggest InSight recorded. You see the seismogram and hear its signals turned into sound (sonification).', url: nasa('PIA25281')},
   intro: {f:'assets/video/intro.mp4'},
 };
+// Figures are numbered in the order they first appear, like plates in a report.
+const FIG_ORDER = ['insight-art','phoenix-selfie','phoenix-site','phx-launch-1','phx-launch-2','phx-parachute','phx-arrays','phx-alice','phx-arm','phx-dodo',
+  'phx-stone-soup','phx-panorama','ins-assembly-1','ins-prelaunch','ins-liftoff','ins-landing-art','ins-concept','mars-layers','ins-seis','ins-hp3',
+  'ins-shield','seismogram','mars-core-art','quake','ins-first-selfie','phx-last-look','ins-dusty-panel','ins-final-selfie','phx-site-2008','phx-site-2017'];
+const FIG = Object.fromEntries(FIG_ORDER.map((k, i) => [k, i + 1]));
 
 /* ---------------- state ---------------- */
 const CANVAS = $('stage');
@@ -224,9 +276,9 @@ const G = CANVAS.getContext('2d');
 const LAYER = new OffscreenCanvas(W, H);
 const LG = LAYER.getContext('2d');
 let g = G;
-const IMG = {}, BLUR = {}, BUF = {}, VID = {}, TALK = [];
-let STARS, MARS, EARTH, FROST, ACTX, TL, INTRO_END = 8.583, QUAKE_ENV = [];
-let HITS = [], CRED = new Set(), STAMPQ = null, PILL = null;
+const IMG = {}, BUF = {}, VID = {}, TALK = [];
+let STARS, MARS, FROST, ACTX, TL, INTRO_END = 8.583, QUAKE_ENV = [];
+let HITS = [], CRED = new Set(), FIGQ = null, CHAP = null;
 let MODE = 'live';
 
 /* ---------------- loading ---------------- */
@@ -234,7 +286,7 @@ async function fetchBlob(url) { const r = await fetch(url); if (!r.ok) throw new
 function makeVideo(blob) {
   return new Promise((res, rej) => {
     const v = document.createElement('video');
-    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto';
     v.addEventListener('loadeddata', () => res(v), {once: true});
     v.addEventListener('error', () => rej(new Error('video failed')), {once: true});
     v.src = URL.createObjectURL(blob);
@@ -248,12 +300,12 @@ function seekVideo(v, time) {
 async function loadAll(msg) {
   let done = 0; const total = Object.keys(IMGS).length + Object.keys(CLIPS).length + 4;
   const step = () => { done++; msg(`Loading… ${Math.round(done / total * 100)}%`); };
-  await Promise.all(['800 64px "Baloo 2"','700 40px "Baloo 2"','600 30px "Baloo 2"','500 24px "Baloo 2"','700 48px "Caveat"'].map(f => document.fonts.load(f)));
+  await Promise.all([`800 64px ${F_DISP}`, `700 40px ${F_TEXT}`, `400 30px ${F_TEXT}`].map(f => document.fonts.load(f)));
   ACTX = new AudioContext();
   await Promise.all(Object.entries(IMGS).map(async ([k, m]) => { IMG[k] = await createImageBitmap(await fetchBlob('assets/img/' + m.f)); step(); }));
   await Promise.all(Object.entries(CLIPS).map(async ([k, m]) => {
     BUF[k] = await ACTX.decodeAudioData(await (await fetchBlob('assets/voice/' + m.file)).arrayBuffer()); step();
-  }).map(p => p.catch(e => { throw e; })));
+  }));
   const quakeBlob = await fetchBlob(VIDEOS.quake.f);
   BUF.quake = await ACTX.decodeAudioData(await quakeBlob.arrayBuffer()); step();
   VID.quake = await makeVideo(quakeBlob); step();
@@ -290,59 +342,30 @@ function buildQuakeEnvelope() {
   const mx = Math.max(...QUAKE_ENV) || 1; for (let i = 0; i < QUAKE_ENV.length; i++) QUAKE_ENV[i] /= mx;
 }
 
-/* ---------------- pre-drawn art ---------------- */
+/* ---------------- pre-drawn art (flat, three colors) ---------------- */
 function buildArt() {
-  // stars
   STARS = new OffscreenCanvas(W, H); { const x = STARS.getContext('2d'), r = rng(7);
-    for (let i = 0; i < 520; i++) { const big = r() > .93; x.globalAlpha = .35 + r() * .65; x.fillStyle = r() < .12 ? '#ffd9b0' : (r() < .1 ? '#bcd4ff' : '#fff');
-      x.beginPath(); x.arc(r() * W, r() * H, big ? 1.4 + r() * 1.6 : .4 + r() * 1.1, 0, 7); x.fill(); } }
-  MARS = makePlanet(1600, 760, 'mars');
-  EARTH = makePlanet(400, 180, 'earth');
-  // blurred backgrounds
-  for (const k of ['phoenix-site','phx-arrays','phx-alice','ins-concept','phx-launch-1']) {
-    const c = new OffscreenCanvas(480, 270), x = c.getContext('2d');
-    x.filter = 'blur(6px)'; coverOn(x, IMG[k], -20, -20, 520, 310, .5, .5, 1); BLUR[k] = c;
-  }
-  // frost overlay
+    for (let i = 0; i < 260; i++) { x.fillStyle = pa(.2 + r() * .55); x.beginPath(); x.arc(r() * W, r() * H, .5 + r() * 1.2, 0, 7); x.fill(); } }
+  MARS = makeMars();
   FROST = new OffscreenCanvas(W, H); { const x = FROST.getContext('2d'), r = rng(11);
     const gr = x.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, W * .62);
-    gr.addColorStop(0, 'rgba(225,240,255,0)'); gr.addColorStop(1, 'rgba(225,240,255,.85)');
+    gr.addColorStop(0, pa(0)); gr.addColorStop(1, pa(.8));
     x.fillStyle = gr; x.fillRect(0, 0, W, H);
     for (let i = 0; i < 9000; i++) { const px = r() * W, py = r() * H, dx = Math.min(px, W - px) / W, dy = Math.min(py, H - py) / H, edge = 1 - Math.min(dx, dy) * 3.2;
-      if (r() < edge) { x.fillStyle = `rgba(240,248,255,${.25 + r() * .6})`; x.fillRect(px, py, 1 + r() * 3, 1 + r() * 3); } } }
+      if (r() < edge) { x.fillStyle = pa(.25 + r() * .6); x.fillRect(px, py, 1 + r() * 3, 1 + r() * 3); } } }
 }
-function makePlanet(S, R, kind) {
-  const c = new OffscreenCanvas(S, S), x = c.getContext('2d'), r = rng(kind === 'mars' ? 42 : 9);
+// Mars as a flat red disk: polar cap, a few ink graticule lines, a flat shadow crescent.
+function makeMars() {
+  const S = 1200, Rr = 560, c = new OffscreenCanvas(S, S), x = c.getContext('2d');
   x.translate(S / 2, S / 2);
-  const glow = x.createRadialGradient(0, 0, R * .92, 0, 0, R * 1.05);
-  glow.addColorStop(0, kind === 'mars' ? 'rgba(255,120,60,.35)' : 'rgba(90,170,255,.4)'); glow.addColorStop(1, 'rgba(0,0,0,0)');
-  x.fillStyle = glow; x.beginPath(); x.arc(0, 0, R * 1.05, 0, 7); x.fill();
-  x.save(); x.beginPath(); x.arc(0, 0, R, 0, Math.PI * 2); x.clip();
-  if (kind === 'mars') {
-    const base = x.createRadialGradient(-R * .35, -R * .35, R * .1, 0, 0, R);
-    base.addColorStop(0, '#ef8f57'); base.addColorStop(.55, '#c4552a'); base.addColorStop(1, '#7a2a10');
-    x.fillStyle = base; x.fillRect(-R, -R, 2 * R, 2 * R);
-    for (let i = 0; i < 26; i++) { x.fillStyle = `rgba(95,32,12,${.10 + r() * .18})`; x.beginPath(); x.ellipse((r() - .5) * 1.8 * R, (r() - .35) * 1.5 * R, R * (.08 + r() * .25), R * (.04 + r() * .12), r() * 3, 0, 7); x.fill(); }
-    for (let i = 0; i < 70; i++) { const cx = (r() - .5) * 1.9 * R, cy = (r() - .45) * 1.8 * R, rr = R * (.01 + r() * .035);
-      x.fillStyle = 'rgba(70,22,8,.35)'; x.beginPath(); x.arc(cx, cy, rr, 0, 7); x.fill();
-      x.strokeStyle = 'rgba(255,195,150,.28)'; x.lineWidth = rr * .25; x.beginPath(); x.arc(cx - rr * .15, cy - rr * .15, rr, Math.PI, Math.PI * 1.6); x.stroke(); }
-    x.fillStyle = 'rgba(80,25,10,.35)'; x.beginPath(); x.ellipse(R * .05, R * .12, R * .5, R * .045, -.12, 0, 7); x.fill();
-    const cap = x.createRadialGradient(0, -R * .92, 0, 0, -R * .92, R * .4);
-    cap.addColorStop(0, 'rgba(255,255,255,.97)'); cap.addColorStop(.55, 'rgba(250,246,240,.9)'); cap.addColorStop(1, 'rgba(250,246,240,0)');
-    x.fillStyle = cap; x.beginPath(); x.ellipse(0, -R * .91, R * .42, R * .17, 0, 0, 7); x.fill();
-  } else {
-    const base = x.createRadialGradient(-R * .3, -R * .3, R * .1, 0, 0, R);
-    base.addColorStop(0, '#5fb4ff'); base.addColorStop(.6, '#1f6fd1'); base.addColorStop(1, '#0b2f74');
-    x.fillStyle = base; x.fillRect(-R, -R, 2 * R, 2 * R);
-    for (let i = 0; i < 9; i++) { x.fillStyle = `rgba(70,${150 + r() * 50},80,.9)`; x.beginPath(); x.ellipse((r() - .5) * 1.4 * R, (r() - .5) * 1.4 * R, R * (.12 + r() * .25), R * (.08 + r() * .18), r() * 3, 0, 7); x.fill(); }
-    for (let i = 0; i < 12; i++) { x.fillStyle = 'rgba(255,255,255,.55)'; x.beginPath(); x.ellipse((r() - .5) * 1.8 * R, (r() - .5) * 1.8 * R, R * (.1 + r() * .3), R * (.03 + r() * .05), r() * .6 - .3, 0, 7); x.fill(); }
-  }
-  const sh = x.createRadialGradient(-R * .4, -R * .45, R * .2, -R * .1, -R * .1, R * 1.25);
-  sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(.7, 'rgba(0,0,0,.15)'); sh.addColorStop(1, 'rgba(0,0,0,.62)');
-  x.fillStyle = sh; x.fillRect(-R, -R, 2 * R, 2 * R);
+  x.fillStyle = RED; x.beginPath(); x.arc(0, 0, Rr, 0, Math.PI * 2); x.fill();
+  x.save(); x.beginPath(); x.arc(0, 0, Rr, 0, Math.PI * 2); x.clip();
+  x.fillStyle = PAPER; x.beginPath(); x.ellipse(0, -Rr * .93, Rr * .42, Rr * .16, 0, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = ia(.18); x.lineWidth = 3;
+  for (const lat of [-35, 0, 35]) { const yy = -Rr * Math.sin(lat * Math.PI / 180), rx = Rr * Math.cos(lat * Math.PI / 180); x.beginPath(); x.ellipse(0, yy, rx, rx * .08, 0, 0, Math.PI); x.stroke(); }
+  x.fillStyle = ia(.22); x.beginPath(); x.arc(0, 0, Rr, -Math.PI / 2, Math.PI / 2); x.ellipse(0, 0, Rr * .5, Rr, 0, Math.PI / 2, -Math.PI / 2, true); x.fill();
   x.restore();
-  c.R = R;
-  return c;
+  c.R = Rr; return c;
 }
 
 /* ---------------- timeline ---------------- */
@@ -375,13 +398,13 @@ function buildTimeline() {
     S('closer', at['03'] - .2, {clip: '03', xf: .3}),
     S('phxTitle', at['04'] - .2, {clip: '04', chapter: 'Phoenix'}),
     S('goals', at['05'] - .35, {clip: '05', chapter: 'Phoenix’s mission'}),
-    S('launch', at['06'] - .35, {clip: '06', chapter: 'Launch & landing'}),
+    S('launch', at['06'] - .35, {clip: '06', chapter: 'Launch and landing'}),
     S('landed', at['07'] - .35, {clip: '07', chapter: 'Phoenix fact file'}),
-    S('water', at['08'] - .35, {clip: '08', chapter: 'Water on Mars!'}),
+    S('water', at['08'] - .35, {clip: '08', chapter: 'Water on Mars'}),
     S('lasted', at['09'] - .35, {clip: '09', chapter: '151 sols'}),
     S('family', at['10'] - .35, {clip: '10', chapter: 'From Phoenix to InSight'}),
     S('liftoff', at['11'] - .3, {clip: '11', chapter: 'InSight launch'}),
-    S('flight', at['12'] - .3, {clip: '12', chapter: 'Flight & landing'}),
+    S('flight', at['12'] - .3, {clip: '12', chapter: 'Flight and landing'}),
     S('giraffe', at['13'] - .3, {clip: '13', chapter: 'InSight fact file'}),
     S('igoals', at['14'] - .35, {clip: '14', chapter: 'InSight’s mission'}),
     S('listen', listen - .1, {chapter: 'Listen to a marsquake'}),
@@ -413,282 +436,240 @@ function coverOn(x, im, dx, dy, dw, dh, fx = .5, fy = .5, z = 1) {
 }
 function hit(key, x, y, w, h) { HITS.push({key, x, y, w, h}); }
 function use(key) { CRED.add(key); }
+function fill(color = INK) { g.fillStyle = color; g.fillRect(0, 0, W, H); }
 function stars(t, a = 1) {
   if (a <= 0) return; g.save(); g.globalAlpha *= a;
-  const off = (t * 5) % W; g.drawImage(STARS, -off, 0); g.drawImage(STARS, W - off, 0); g.restore();
+  const off = (t * 4) % W; g.drawImage(STARS, -off, 0); g.drawImage(STARS, W - off, 0); g.restore();
 }
-function space(t, a = 1) { g.fillStyle = '#03040a'; g.fillRect(0, 0, W, H); stars(t, a); }
-function planet(cv, cx, cy, r, a = 1) {
-  if (a <= 0) return; const sz = cv.width * r / cv.R;
-  g.save(); g.globalAlpha *= a; g.drawImage(cv, cx - sz / 2, cy - sz / 2, sz, sz); g.restore();
+function space(t, a = 1) { fill(INK); stars(t, a); }
+function marsDisk(cx, cy, r, a = 1) {
+  if (a <= 0) return; const sz = MARS.width * r / MARS.R;
+  g.save(); g.globalAlpha *= a; g.drawImage(MARS, cx - sz / 2, cy - sz / 2, sz, sz); g.restore();
 }
-function blurBg(key, dim = .5) {
-  g.drawImage(BLUR[key], 0, 0, W, H);
-  g.fillStyle = `rgba(3,4,10,${dim})`; g.fillRect(0, 0, W, H);
-}
-function full(key, {z = 1, fx = .5, fy = .5, a = 1, dim = 0, contain = false, bg = '#03040a'} = {}) {
+function veil(a) { if (a <= 0) return; g.fillStyle = ia(a); g.fillRect(0, 0, W, H); }
+function full(key, {z = 1, fx = .5, fy = .5, a = 1, dim = 0} = {}) {
   const im = IMG[key]; if (!im || a <= 0) return;
-  g.save(); g.globalAlpha *= a;
-  if (contain) {
-    g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    const s = Math.min(W / im.width, H / im.height) * z;
-    g.drawImage(im, W / 2 - fx * im.width * s, H / 2 - fy * im.height * s, im.width * s, im.height * s);
-  } else coverOn(g, im, 0, 0, W, H, fx, fy, z);
-  if (dim > 0) { g.fillStyle = `rgba(0,0,0,${dim})`; g.fillRect(0, 0, W, H); }
-  g.restore();
-  if (a > .5) { use(key); hit(key, 0, 0, W, H); STAMPQ = key; }
+  g.save(); g.globalAlpha *= a; coverOn(g, im, 0, 0, W, H, fx, fy, z); if (dim > 0) veil(dim); g.restore();
+  if (a > .5) { use(key); hit(key, 0, 0, W, H); FIGQ = key; }
 }
-function stamp(kind, x, y, align = 'right', size = 22) {
-  const text = KIND[kind]; g.save(); g.font = `800 ${size}px "Baloo 2"`; g.letterSpacing = '2px';
-  const w = g.measureText(text).width + size * 1.1, h = size * 1.55, x0 = align === 'right' ? x - w : x;
-  g.fillStyle = KIND_COLOR[kind]; g.beginPath(); g.roundRect(x0, y, w, h, 6); g.fill();
-  g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2; g.stroke();
-  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, x0 + w / 2, y + h / 2 + 1);
-  g.restore();
-}
-function card(key, cx, cy, w, h, o = {}) {
-  const {rot = 0, s = 1, a = 1, cap = '', fx = .5, fy = .5, z = 1, contain = false, filter = '', tape = true, showStamp = true} = o;
-  const im = IMG[key]; if (!im || a <= .002 || s <= .002) return;
-  const pad = 16, capH = cap ? 72 : pad, fw = w + pad * 2, fh = h + pad + capH;
-  g.save(); g.globalAlpha *= a; g.translate(cx, cy); g.rotate(rot * Math.PI / 180); g.scale(s, s);
-  g.shadowColor = 'rgba(0,0,0,.55)'; g.shadowBlur = 40; g.shadowOffsetY = 18;
-  g.fillStyle = '#f5efe2'; g.beginPath(); g.roundRect(-fw / 2, -fh / 2, fw, fh, 8); g.fill();
-  g.shadowColor = 'transparent';
-  g.save(); g.beginPath(); g.rect(-fw / 2 + pad, -fh / 2 + pad, w, h); g.clip();
-  if (filter) g.filter = filter;
-  if (contain) { g.fillStyle = '#0b0c12'; g.fillRect(-fw / 2 + pad, -fh / 2 + pad, w, h); const k = Math.min(w / im.width, h / im.height); g.drawImage(im, -im.width * k / 2, -fh / 2 + pad + (h - im.height * k) / 2, im.width * k, im.height * k); }
-  else coverOn(g, im, -fw / 2 + pad, -fh / 2 + pad, w, h, fx, fy, z);
-  g.restore();
-  if (cap) { g.fillStyle = '#1d1b26'; g.font = '700 46px "Caveat"'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(cap, 0, fh / 2 - capH / 2 + 2, fw - 40); }
-  if (tape) { g.fillStyle = 'rgba(255,226,140,.8)'; g.save(); g.translate(0, -fh / 2); g.rotate(-.05); g.fillRect(-70, -20, 140, 40); g.restore(); }
-  if (showStamp) stamp(IMGS[key].kind, fw / 2 - pad - 12, -fh / 2 + pad + 12, 'right', 20);
-  g.restore();
-  if (a > .4 && s > .4) { use(key); const ew = fw * s, eh = fh * s; hit(key, cx - ew / 2, cy - eh / 2, ew, eh); }
-}
+function rule(x, y, w = 120, a = 1, h = 8) { if (a <= 0) return; g.save(); g.globalAlpha *= a; g.fillStyle = RED; g.fillRect(x, y, w, h); g.restore(); }
+function inkPanel(x, y, w, h, a = 1, alpha = .88) { if (a <= 0) return; g.save(); g.globalAlpha *= a; g.fillStyle = ia(alpha); g.fillRect(x, y, w, h); g.restore(); }
 function wrap(str, maxW) {
   const words = str.split(' '), lines = []; let cur = '';
   for (const w of words) { const test = cur ? cur + ' ' + w : w; if (g.measureText(test).width > maxW && cur) { lines.push(cur); cur = w; } else cur = test; }
   if (cur) lines.push(cur); return lines;
 }
+// Text. disp=true uses the display face (Arial Black) in capitals; fit shrinks one line to a width.
 function T(str, x, y, o = {}) {
-  const {size = 48, weight = 800, fam = 'Baloo 2', color = '#fff', align = 'left', base = 'alphabetic', a = 1, ls = 0, shadow = .6, maxW = 0, lh = 1.12} = o;
-  if (a <= 0) return 0;
-  g.save(); g.globalAlpha *= a; g.font = `${weight} ${size}px "${fam}"`; g.fillStyle = color; g.textAlign = align; g.textBaseline = base;
-  g.letterSpacing = ls ? ls + 'px' : '0px';
-  if (shadow) { g.shadowColor = `rgba(0,0,0,${shadow})`; g.shadowBlur = size * .35; g.shadowOffsetY = size * .06; }
+  const {weight = 700, color = PAPER, align = 'left', base = 'alphabetic', a = 1, ls = 0, maxW = 0, lh = 1.25, fit = 0, disp = false} = o;
+  let {size = 40} = o;
+  if (a <= 0 || !str) return 0;
+  const fam = disp ? F_DISP : F_TEXT; if (disp) str = str.toUpperCase();
+  g.save(); g.globalAlpha *= a; g.letterSpacing = ls ? ls + 'px' : '0px';
+  g.font = `${disp ? 800 : weight} ${size}px ${fam}`;
+  if (fit) { const w = g.measureText(str).width; if (w > fit) { size = size * fit / w; g.font = `${disp ? 800 : weight} ${size}px ${fam}`; } }
+  g.fillStyle = color; g.textAlign = align; g.textBaseline = base;
   const lines = maxW ? wrap(str, maxW) : [str];
   lines.forEach((ln, i) => g.fillText(ln, x, y + i * size * lh));
   g.restore(); return lines.length;
 }
-function chip(text, cx, cy, {a = 1, s = 1, color = '#ff8a3d', ink = '#160a03', size = 34} = {}) {
-  if (a <= 0 || s <= 0) return;
-  g.save(); g.globalAlpha *= a; g.translate(cx, cy); g.scale(s, s);
-  g.font = `800 ${size}px "Baloo 2"`; g.letterSpacing = '2px';
-  const w = g.measureText(text).width + size * 1.3, h = size * 1.7;
-  g.shadowColor = 'rgba(0,0,0,.45)'; g.shadowBlur = 18; g.shadowOffsetY = 6;
-  g.fillStyle = color; g.beginPath(); g.roundRect(-w / 2, -h / 2, w, h, h / 2); g.fill(); g.shadowColor = 'transparent';
-  g.fillStyle = ink; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 0, size * .07);
+const D = (str, x, y, o = {}) => T(str, x, y, {...o, disp: true});
+function measure(str, size, weight = 700, disp = false, ls = 0) {
+  g.save(); g.letterSpacing = ls ? ls + 'px' : '0px'; g.font = `${disp ? 800 : weight} ${size}px ${disp ? F_DISP : F_TEXT}`;
+  const w = g.measureText(disp ? str.toUpperCase() : str).width; g.restore(); return w;
+}
+// Tag: outlined label, or filled red for the one key fact on screen.
+function tag(text, x, y, {a = 1, fillRed = false, align = 'left', size = 22} = {}) {
+  if (a <= 0) return; text = text.toUpperCase();
+  const ls = size * .1, w = measure(text, size, 700, false, ls) + size * 1.6, h = size * 2.1, x0 = align === 'center' ? x - w / 2 : (align === 'right' ? x - w : x);
+  g.save(); g.globalAlpha *= a;
+  if (fillRed) { g.fillStyle = RED; g.fillRect(x0, y - h / 2, w, h); }
+  else { g.fillStyle = ia(.75); g.fillRect(x0, y - h / 2, w, h); g.strokeStyle = PAPER; g.lineWidth = 2; g.strokeRect(x0 + 1, y - h / 2 + 1, w - 2, h - 2); }
   g.restore();
+  T(text, x0 + w / 2, y + size * .36, {size, align: 'center', ls, a, color: fillRed ? INK : PAPER});
 }
-function panel(x, y, w, h, a = 1, r = 22) {
-  if (a <= 0) return; g.save(); g.globalAlpha *= a;
-  g.fillStyle = 'rgba(8,10,24,.8)'; g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 2;
-  g.beginPath(); g.roundRect(x, y, w, h, r); g.fill(); g.stroke(); g.restore();
+// Plate: a photo in a hairline frame with its figure number, caption and what kind of image it is.
+function plate(key, x, y, w, h, o = {}) {
+  const {a = 1, dy = 0, cap = '', fx = .5, fy = .5, z = 1, contain = false, filter = '', reveal = 1, video = null} = o;
+  const m = IMGS[key] || VIDEOS[key], im = video || IMG[key]; if (!m || !im || a <= .002) return;
+  g.save(); g.globalAlpha *= a; g.translate(0, dy);
+  g.save(); g.beginPath(); g.rect(x, y, w * reveal, h); g.clip(); if (filter) g.filter = filter;
+  if (video) { if (video.readyState >= 2) g.drawImage(video, x, y, w, h); else { g.fillStyle = '#000'; g.fillRect(x, y, w, h); } }
+  else if (contain) { g.fillStyle = '#000'; g.fillRect(x, y, w, h); const k = Math.min(w / im.width, h / im.height); g.drawImage(im, x + (w - im.width * k) / 2, y + (h - im.height * k) / 2, im.width * k, im.height * k); }
+  else coverOn(g, im, x, y, w, h, fx, fy, z);
+  g.restore();
+  g.strokeStyle = pa(.35); g.lineWidth = 1; g.strokeRect(x + .5, y + .5, w - 1, h - 1);
+  const n = FIG[key];
+  if (n) T(`FIG. ${pad2(n)}`, x, y + h + 32, {size: 17, ls: 1.6, color: RED});
+  T(cap, x + (n ? 92 : 0), y + h + 32, {size: 21, maxW: 0, color: PAPER});
+  T(KIND[m.kind] + (video ? ' + SOUND' : ''), x, y + h + 58, {size: 14, ls: 2, color: m.kind === 'ill' ? RED : pa(.6)});
+  g.restore();
+  if (a > .4) { use(key); hit(key, x, y + dy, w, h + 66); }
 }
-function dateBlock(big, small, x, y, a, extra) {
-  if (a <= 0) return; const dy = (1 - a) * 30;
-  g.save(); g.globalAlpha *= a; const bk = g.createLinearGradient(0, 0, 1250, 0);
-  bk.addColorStop(0, 'rgba(0,0,0,.62)'); bk.addColorStop(.75, 'rgba(0,0,0,.35)'); bk.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = bk; g.fillRect(0, y - 110, 1250, extra ? 260 : 210); g.restore();
-  T(big, x, y + dy, {size: 92, color: '#ff8a3d', a, ls: 3});
-  T(small, x, y + 62 + dy, {size: 36, weight: 700, a});
-  if (extra) T(extra, x, y + 112 + dy, {size: 30, weight: 600, a, color: 'rgba(255,255,255,.85)'});
+function dateBlock(big, l1, l2, x, y, a) {
+  if (a <= 0) return;
+  const bigSize = Math.min(84, 84 * 980 / Math.max(1, measure(big, 84, 800, true))), w = Math.max(measure(big, bigSize, 800, true), measure(l1, 30), l2 ? measure(l2, 24, 400) : 0);
+  const dy = (1 - a) * 20, h = l2 ? 226 : 186;
+  inkPanel(x - 32, y + dy, w + 64, h, a);
+  rule(x, y + dy + 30, 64, a, 6);
+  D(big, x, y + dy + 30 + 98, {size: bigSize, a});
+  T(l1, x, y + dy + 30 + 144, {size: 30, a});
+  if (l2) T(l2, x, y + dy + 30 + 182, {size: 24, weight: 400, a, color: pa(.75)});
 }
-function circlePath(x, y, r) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); }
 function factTable(x, y, w, title, rows, c, c0, a = 1) {
   if (a <= 0 || c < c0) return;
-  const rh = 54, top = 92, h = top + rows.length * rh + 16, slide = 1 - E.out(ramp(c, c0, c0 + .5));
-  g.save(); g.globalAlpha *= a * (1 - slide * .7); g.translate(slide * 140, 0);
-  panel(x, y, w, h, 1);
-  T(title, x + 34, y + 62, {size: 40, color: '#ff8a3d', ls: 2, shadow: 0});
+  const rh = 52, top = 74, h = top + rows.length * rh + 12, s = E.out(ramp(c, c0, c0 + .5));
+  g.save(); g.globalAlpha *= a * s; g.translate((1 - s) * 40, 0);
+  inkPanel(x, y, w, h, 1, .9);
+  rule(x, y, w, 1, 6);
+  T(title, x + 28, y + 52, {size: 22, ls: 2.6});
   const base = g.globalAlpha;
   rows.forEach(([k, v], i) => {
-    const ra = E.out(ramp(c, c0 + .25 + i * .1, c0 + .6 + i * .1)), yy = y + top + i * rh;
-    g.globalAlpha = base * ra;
-    g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(x + 30, yy, w - 60, 2);
-    T(k, x + 34, yy + 39, {size: 30, weight: 600, color: 'rgba(255,255,255,.8)', shadow: 0});
-    T(v, x + w - 34, yy + 40, {size: 34, weight: 800, align: 'right', shadow: 0});
+    const r2 = E.out(ramp(c, c0 + .2 + i * .08, c0 + .55 + i * .08)), yy = y + top + i * rh;
+    g.globalAlpha = base * r2;
+    g.fillStyle = pa(.16); g.fillRect(x + 28, yy, w - 56, 1);
+    T(k, x + 28, yy + 36, {size: 26, weight: 400, color: pa(.72)});
+    T(v, x + w - 28, yy + 36, {size: 30, align: 'right'});
   });
   g.restore();
 }
-function sparkle(x, y, r, a) {
-  if (a <= 0) return; g.save(); g.globalAlpha *= a; g.translate(x, y); g.fillStyle = '#fff6c9';
-  g.beginPath(); for (let i = 0; i < 8; i++) { const ang = i * Math.PI / 4, rr = i % 2 ? r * .28 : r; g.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr); } g.closePath(); g.fill(); g.restore();
-}
+function circlePath(x, y, r) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); }
 function drawVideo(v, x, y, w, h) {
   if (v && v.readyState >= 2) g.drawImage(v, x, y, w, h); else { g.fillStyle = '#000'; g.fillRect(x, y, w, h); }
 }
 
-/* ---------------- illustrations (drawn) ---------------- */
-const INK = '#1d1d24';
+/* ---------------- illustrations: paper line on ink, red for the one thing that matters ---------------- */
+function stroke(lw = 4, color = PAPER) { g.lineWidth = lw; g.strokeStyle = color; g.lineJoin = 'round'; g.lineCap = 'round'; }
 function polarBear(cx, cy, s, a = 1) {
   if (a <= 0 || s <= 0) return;
-  g.save(); g.globalAlpha *= a; g.translate(cx, cy); g.scale(s, s);
-  g.lineWidth = 7; g.strokeStyle = INK; g.lineJoin = 'round'; g.fillStyle = '#f6f3ea';
-  // thick legs with big paws (back pair slightly darker so the body reads as 3D)
-  const leg = (x, dark) => { g.fillStyle = dark ? '#e3ddcf' : '#f6f3ea'; g.beginPath(); g.moveTo(x - 34, 20); g.lineTo(x - 30, 128); g.quadraticCurveTo(x - 48, 162, x - 8, 164); g.lineTo(x + 38, 164); g.quadraticCurveTo(x + 46, 140, x + 30, 120); g.lineTo(x + 34, 20); g.closePath(); g.fill(); g.stroke(); };
-  leg(-95, true); leg(170, true); leg(-160, false); leg(105, false);
-  g.fillStyle = '#f6f3ea';
-  // body with a shoulder hump, rump higher than the neck
+  g.save(); g.globalAlpha *= a; g.translate(cx, cy); g.scale(s, s); stroke(6 / Math.max(s, .4)); g.fillStyle = INK;
+  const leg = x => { g.beginPath(); g.moveTo(x - 34, 20); g.lineTo(x - 30, 128); g.quadraticCurveTo(x - 48, 162, x - 8, 164); g.lineTo(x + 38, 164); g.quadraticCurveTo(x + 46, 140, x + 30, 120); g.lineTo(x + 34, 20); g.closePath(); g.fill(); g.stroke(); };
+  leg(-95); leg(170); leg(-160); leg(105);
   g.beginPath(); g.moveTo(-200, 10); g.bezierCurveTo(-210, -80, -120, -118, -40, -104); g.bezierCurveTo(60, -128, 200, -110, 230, -40);
   g.bezierCurveTo(262, 30, 220, 92, 140, 96); g.lineTo(-120, 96); g.bezierCurveTo(-190, 92, -196, 60, -200, 10); g.closePath(); g.fill(); g.stroke();
-  // long neck + head held low, the way polar bears walk
   g.beginPath(); g.moveTo(-170, -70); g.bezierCurveTo(-230, -70, -290, -40, -330, 0); g.bezierCurveTo(-370, 22, -400, 40, -396, 62);
   g.bezierCurveTo(-392, 84, -330, 84, -290, 70); g.bezierCurveTo(-250, 60, -210, 50, -190, 40); g.closePath(); g.fill(); g.stroke();
   g.beginPath(); g.arc(-312, -14, 15, Math.PI * .95, Math.PI * 2.1); g.fill(); g.stroke();
-  g.fillStyle = INK; g.beginPath(); g.ellipse(-400, 60, 14, 11, 0, 0, 7); g.fill();
-  g.beginPath(); g.arc(-340, 20, 7, 0, 7); g.fill();
-  g.strokeStyle = INK; g.lineWidth = 5; g.beginPath(); g.moveTo(-398, 72); g.quadraticCurveTo(-375, 84, -352, 78); g.stroke();
+  g.fillStyle = PAPER; g.beginPath(); g.ellipse(-400, 60, 13, 10, 0, 0, 7); g.fill(); g.beginPath(); g.arc(-340, 20, 6, 0, 7); g.fill();
   g.restore();
 }
-function giraffe(cx, groundY, hgt, a = 1) {   // hgt = drawn height in px
+function giraffe(cx, groundY, hgt, a = 1) {
   if (a <= 0 || hgt <= 0) return;
   const s = hgt / 1000;
-  g.save(); g.globalAlpha *= a; g.translate(cx, groundY); g.scale(s, s);
-  g.lineWidth = 9; g.strokeStyle = INK; g.lineJoin = 'round'; g.lineCap = 'round';
-  const F = '#f0b94e', SP = '#a35d1e';
-  const legs = [-150, -95, 110, 165];
-  for (const x of legs) { g.fillStyle = F; g.beginPath(); g.roundRect(x - 18, -420, 36, 420, 14); g.fill(); g.stroke(); g.fillStyle = INK; g.fillRect(x - 18, -24, 36, 24); }
+  g.save(); g.globalAlpha *= a; g.translate(cx, groundY); g.scale(s, s); stroke(6 / s * .6); g.fillStyle = INK;
+  for (const x of [-150, -95, 110, 165]) { g.beginPath(); g.rect(x - 16, -420, 32, 420); g.fill(); g.stroke(); }
   const bodyPath = () => { g.beginPath(); g.ellipse(0, -470, 230, 110, -.06, 0, Math.PI * 2); };
   const neckPath = () => { g.beginPath(); g.moveTo(-190, -520); g.lineTo(-310, -900); g.lineTo(-245, -915); g.lineTo(-100, -560); g.closePath(); };
-  g.fillStyle = F; neckPath(); g.fill(); g.stroke(); bodyPath(); g.fill(); g.stroke();
-  const r = rng(5);
-  g.save(); bodyPath(); g.clip(); g.fillStyle = SP; for (let i = 0; i < 16; i++) { g.beginPath(); g.ellipse(-200 + r() * 400, -560 + r() * 190, 24 + r() * 16, 18 + r() * 12, r() * 3, 0, 7); g.fill(); } g.restore();
-  g.save(); neckPath(); g.clip(); g.fillStyle = SP; for (let i = 0; i < 9; i++) { const p = r(); g.beginPath(); g.ellipse(lerp(-150, -270, p) + r() * 30, lerp(-560, -880, p), 18, 14, r() * 3, 0, 7); g.fill(); } g.restore();
-  g.strokeStyle = INK; g.beginPath(); g.moveTo(222, -480); g.quadraticCurveTo(262, -400, 250, -330); g.stroke();
-  g.fillStyle = INK; g.beginPath(); g.ellipse(250, -320, 12, 22, 0, 0, 7); g.fill();
-  g.fillStyle = F; g.beginPath(); g.ellipse(-310, -935, 78, 44, -.35, 0, Math.PI * 2); g.fill(); g.stroke();
+  neckPath(); g.fill(); g.stroke(); bodyPath(); g.fill(); g.stroke();
+  const r = rng(5); g.lineWidth = 3 / s * .6;
+  g.save(); bodyPath(); g.clip(); for (let i = 0; i < 14; i++) { g.beginPath(); g.ellipse(-190 + r() * 380, -555 + r() * 180, 24 + r() * 14, 17 + r() * 10, r() * 3, 0, 7); g.stroke(); } g.restore();
+  g.save(); neckPath(); g.clip(); for (let i = 0; i < 8; i++) { const p = r(); g.beginPath(); g.ellipse(lerp(-150, -270, p) + r() * 26, lerp(-570, -880, p), 17, 13, r() * 3, 0, 7); g.stroke(); } g.restore();
+  stroke(6 / s * .6);
+  g.beginPath(); g.moveTo(222, -480); g.quadraticCurveTo(262, -400, 250, -330); g.stroke();
+  g.beginPath(); g.ellipse(-310, -935, 78, 44, -.35, 0, Math.PI * 2); g.fill(); g.stroke();
   g.beginPath(); g.moveTo(-282, -975); g.lineTo(-276, -1010); g.moveTo(-252, -968); g.lineTo(-240, -1002); g.stroke();
-  g.fillStyle = INK; g.beginPath(); g.arc(-276, -1012, 9, 0, 7); g.arc(-239, -1004, 9, 0, 7); g.fill();
-  g.beginPath(); g.arc(-322, -948, 7, 0, 7); g.fill();
+  g.fillStyle = PAPER; g.beginPath(); g.arc(-322, -948, 7, 0, 7); g.fill();
   g.restore();
 }
 function iceIcon(x, y, s) {
-  g.save(); g.translate(x, y); g.scale(s, s); g.lineWidth = 5; g.strokeStyle = INK; g.lineJoin = 'round';
+  g.save(); g.translate(x, y); g.scale(s, s); stroke(4); g.fillStyle = INK;
   const top = [[0, -70], [70, -35], [0, 0], [-70, -35]], left = [[-70, -35], [0, 0], [0, 80], [-70, 45]], right = [[70, -35], [0, 0], [0, 80], [70, 45]];
-  for (const [pts, col] of [[left, '#9fd3f0'], [right, '#6fb8e3'], [top, '#e9f8ff']]) { g.fillStyle = col; g.beginPath(); pts.forEach(([a, b], i) => i ? g.lineTo(a, b) : g.moveTo(a, b)); g.closePath(); g.fill(); g.stroke(); }
-  g.strokeStyle = '#fff'; g.lineWidth = 4; g.beginPath(); g.moveTo(-40, -35); g.lineTo(-20, -45); g.stroke();
-  g.strokeStyle = INK; g.lineWidth = 9; g.beginPath(); g.moveTo(95, -110); g.lineTo(150, 10); g.stroke();
-  g.fillStyle = '#9aa3ad'; g.lineWidth = 5; g.beginPath(); g.moveTo(130, 0); g.lineTo(175, -12); g.lineTo(185, 45); g.lineTo(145, 60); g.closePath(); g.fill(); g.stroke();
+  for (const pts of [left, right, top]) { g.beginPath(); pts.forEach(([a, b], i) => i ? g.lineTo(a, b) : g.moveTo(a, b)); g.closePath(); g.fill(); g.stroke(); }
+  g.beginPath(); g.moveTo(98, -112); g.lineTo(146, 6); g.stroke();
+  g.fillStyle = RED; g.beginPath(); g.moveTo(128, 0); g.lineTo(172, -12); g.lineTo(182, 44); g.lineTo(142, 58); g.closePath(); g.fill();
   g.restore();
 }
 function microbeIcon(x, y, s, t) {
-  g.save(); g.translate(x, y); g.scale(s, s); g.lineWidth = 5; g.strokeStyle = INK;
-  g.strokeStyle = '#2c6b3e'; g.lineWidth = 4;
-  for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, w = Math.sin(t * 6 + i) * .15; g.beginPath(); g.moveTo(Math.cos(a) * 78, Math.sin(a) * 58); g.lineTo(Math.cos(a + w) * 104, Math.sin(a + w) * 80); g.stroke(); }
-  g.fillStyle = '#86d993'; g.strokeStyle = INK; g.lineWidth = 5; g.beginPath();
-  for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2, rr = 1 + Math.sin(a * 5 + t * 2) * .05; g.lineTo(Math.cos(a) * 82 * rr, Math.sin(a) * 60 * rr); }
+  g.save(); g.translate(x, y); g.scale(s, s); stroke(3);
+  for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, w = Math.sin(t * 6 + i) * .12; g.beginPath(); g.moveTo(Math.cos(a) * 80, Math.sin(a) * 60); g.lineTo(Math.cos(a + w) * 102, Math.sin(a + w) * 78); g.stroke(); }
+  stroke(4); g.fillStyle = INK; g.beginPath();
+  for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2, rr = 1 + Math.sin(a * 5 + t * 2) * .05; g.lineTo(Math.cos(a) * 80 * rr, Math.sin(a) * 58 * rr); }
   g.closePath(); g.fill(); g.stroke();
-  g.fillStyle = '#3f9f5a'; g.beginPath(); g.ellipse(-12, 4, 26, 20, .3, 0, 7); g.fill();
-  g.fillStyle = 'rgba(255,255,255,.7)'; g.beginPath(); g.arc(30, -18, 9, 0, 7); g.fill();
+  g.fillStyle = RED; g.beginPath(); g.ellipse(-10, 4, 24, 18, .3, 0, 7); g.fill();
   g.restore();
 }
-function snowflake(x, y, r, a = 1) {
-  if (a <= 0) return; g.save(); g.globalAlpha *= a; g.translate(x, y); g.strokeStyle = '#dff3ff'; g.lineWidth = Math.max(2, r * .16); g.lineCap = 'round';
+function snowflake(x, y, r, a = 1, color = PAPER) {
+  if (a <= 0) return; g.save(); g.globalAlpha *= a; g.translate(x, y); stroke(Math.max(2, r * .14), color);
   for (let i = 0; i < 6; i++) { g.rotate(Math.PI / 3); g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -r); g.moveTo(0, -r * .55); g.lineTo(r * .25, -r * .78); g.moveTo(0, -r * .55); g.lineTo(-r * .25, -r * .78); g.stroke(); }
   g.restore();
 }
 function weatherIcon(x, y, s, t) {
   g.save(); g.translate(x, y); g.scale(s, s);
-  for (let i = 0; i < 4; i++) snowflake(-60 + i * 40, 50 + ((t * 40 + i * 23) % 60), 13, .95);
-  g.fillStyle = '#f2f4fa'; g.strokeStyle = INK; g.lineWidth = 5; g.beginPath();
+  for (let i = 0; i < 4; i++) snowflake(-60 + i * 40, 52 + ((t * 40 + i * 23) % 56), 12, 1, i === 1 ? RED : PAPER);
+  stroke(4); g.fillStyle = INK; g.beginPath();
   g.arc(-50, -10, 38, Math.PI * .5, Math.PI * 1.5); g.arc(-10, -40, 46, Math.PI, Math.PI * 1.85); g.arc(45, -18, 38, Math.PI * 1.3, Math.PI * .5); g.closePath(); g.fill(); g.stroke();
   g.restore();
 }
 function droplet(x, y, s, a = 1) {
-  if (a <= 0 || s <= 0) return; g.save(); g.globalAlpha *= a; g.translate(x, y); g.scale(s, s);
-  const gr = g.createLinearGradient(0, -170, 0, 120); gr.addColorStop(0, '#9fe0ff'); gr.addColorStop(1, '#1b7fd6');
-  g.fillStyle = gr; g.strokeStyle = INK; g.lineWidth = 8;
+  if (a <= 0 || s <= 0) return; g.save(); g.globalAlpha *= a; g.translate(x, y); g.scale(s, s); stroke(6); g.fillStyle = INK;
   g.beginPath(); g.moveTo(0, -180); g.bezierCurveTo(40, -110, 120, -40, 120, 30); g.arc(0, 30, 120, 0, Math.PI); g.bezierCurveTo(-120, -40, -40, -110, 0, -180); g.closePath(); g.fill(); g.stroke();
-  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(-50, -10, 18, 40, .4, 0, 7); g.fill();
-  g.fillStyle = '#fff'; g.font = '800 92px "Baloo 2"'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-  g.fillText('H', -48, 78); g.fillText('O', 52, 78); g.font = '800 54px "Baloo 2"'; g.fillText('2', 4, 96);
   g.restore();
+  T('H', x - 50 * s, y + 66 * s, {size: 84 * s, a}); T('2', x - 6 * s, y + 86 * s, {size: 50 * s, a}); T('O', x + 22 * s, y + 66 * s, {size: 84 * s, a});
 }
 function oven(cx, cy, c, a = 1) {   // TEGA, drawn
   if (a <= 0) return; g.save(); g.globalAlpha *= a;
   const heat = ramp(c, 13.0, 14.4);
-  g.lineWidth = 7; g.strokeStyle = INK;
-  g.fillStyle = '#aab3c0'; g.beginPath(); g.roundRect(cx - 200, cy - 130, 400, 260, 22); g.fill(); g.stroke();
-  g.fillStyle = '#7e8896'; g.fillRect(cx + 40, cy - 190, 60, 64); g.strokeRect(cx + 40, cy - 190, 60, 64);
-  g.fillStyle = '#1c1f29'; g.beginPath(); g.roundRect(cx - 160, cy - 90, 220, 180, 14); g.fill(); g.stroke();
-  const glow = g.createRadialGradient(cx - 50, cy, 10, cx - 50, cy, 140);
-  glow.addColorStop(0, `rgba(255,${160 - heat * 60},40,${.25 + heat * .7})`); glow.addColorStop(1, 'rgba(255,90,20,0)');
-  g.fillStyle = glow; g.beginPath(); g.roundRect(cx - 160, cy - 90, 220, 180, 14); g.fill();
-  g.fillStyle = '#9b5a34'; g.beginPath(); g.ellipse(cx - 50, cy + 40, 54, 18, 0, 0, 7); g.fill();
-  g.strokeStyle = `rgba(255,${150 - heat * 50},60,${.3 + heat * .7})`; g.lineWidth = 6;
-  for (let i = 0; i < 3; i++) { g.beginPath(); for (let k = 0; k <= 20; k++) { const xx = cx - 130 + k * 8; g.lineTo(xx, cy + 70 + i * 0 - Math.sin(k + c * 8 + i) * 4); } g.stroke(); }
-  for (let i = 0; i < 8; i++) { const ph = (c * .7 + i / 8) % 1, sx = cx + 70 + Math.sin(i * 2.3 + c) * 30, sy = cy - 200 - ph * 260;
-    const pa = heat * Math.sin(ph * Math.PI) * .85; if (pa <= 0) continue;
-    g.fillStyle = `rgba(235,245,255,${pa})`; g.beginPath(); g.arc(sx, sy, 18 + ph * 34, 0, 7); g.fill(); }
+  stroke(5); g.fillStyle = INK;
+  g.beginPath(); g.rect(cx - 200, cy - 130, 400, 260); g.fill(); g.stroke();
+  g.beginPath(); g.rect(cx + 40, cy - 190, 60, 60); g.fill(); g.stroke();
+  g.fillStyle = ra(.15 + heat * .75); g.fillRect(cx - 160, cy - 90, 220, 180); g.strokeRect(cx - 160, cy - 90, 220, 180);
+  g.fillStyle = PAPER; g.fillRect(cx - 104, cy + 30, 108, 18);
+  stroke(4, PAPER);
+  for (let i = 0; i < 3; i++) { g.beginPath(); for (let k = 0; k <= 20; k++) { const xx = cx - 140 + k * 9.5; g.lineTo(xx, cy + 70 - i * 0 - Math.sin(k + c * 8 + i) * 3); } g.stroke(); }
+  for (let i = 0; i < 7; i++) { const ph = (c * .7 + i / 7) % 1, sx = cx + 70 + Math.sin(i * 2.3 + c) * 28, sy = cy - 210 - ph * 250;
+    const pa2 = heat * Math.sin(ph * Math.PI); if (pa2 <= 0) continue;
+    g.globalAlpha = a * pa2; stroke(3); circlePath(sx, sy, 16 + ph * 30); g.stroke(); }
   g.restore();
 }
 function marsCut(cx, cy, r, open, highlight = '', a = 1, t = 0) {
   if (a <= 0) return; g.save(); g.globalAlpha *= a;
-  planet(MARS, cx, cy, r);
+  marsDisk(cx, cy, r);
   if (open > 0) {
     const a0 = -Math.PI / 2 + .25, a1 = a0 + open * Math.PI * .62;
     g.save(); g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, r + 1, a0, a1); g.closePath(); g.clip();
-    const layers = [[r, '#a8452a', '#7d2c16'], [r * .95, '#e88a46', '#a0401c'], [r * .54, '#ffe08a', '#ff8c1a']];
-    for (const [rr, c1, c2] of layers) { const gr = g.createRadialGradient(cx, cy, rr * .1, cx, cy, rr); gr.addColorStop(0, c1); gr.addColorStop(1, c2); g.fillStyle = gr; circlePath(cx, cy, rr); g.fill(); }
+    for (const [rr, col] of [[r, RED], [r * .955, RED_DEEP], [r * .54, PAPER]]) { g.fillStyle = col; circlePath(cx, cy, rr); g.fill(); }
     g.restore();
-    g.strokeStyle = 'rgba(30,10,4,.8)'; g.lineWidth = 4; g.beginPath(); g.moveTo(cx + Math.cos(a0) * r, cy + Math.sin(a0) * r); g.lineTo(cx, cy); g.lineTo(cx + Math.cos(a1) * r, cy + Math.sin(a1) * r); g.stroke();
-    const pulse = .55 + .45 * Math.sin(t * 6);
+    stroke(3, INK); g.beginPath(); g.moveTo(cx + Math.cos(a0) * r, cy + Math.sin(a0) * r); g.lineTo(cx, cy); g.lineTo(cx + Math.cos(a1) * r, cy + Math.sin(a1) * r); g.stroke();
     if (highlight) {
-      g.strokeStyle = `rgba(255,255,255,${pulse})`; g.lineWidth = 8; g.beginPath();
-      const rr = highlight === 'core' ? r * .54 : (highlight === 'crust' ? r * .975 : r * .75);
-      g.arc(cx, cy, rr, a0, a1); g.stroke();
+      const rr = highlight === 'core' ? r * .54 : (highlight === 'crust' ? r * .978 : r * .75);
+      stroke(5, highlight === 'core' ? INK : PAPER); g.setLineDash([14, 10]); g.lineDashOffset = -t * 30; g.beginPath(); g.arc(cx, cy, rr, a0, a1); g.stroke(); g.setLineDash([]);
     }
   }
   g.restore();
 }
 function rockyPlanets(c, c0, a = 1) {
   if (a <= 0) return;
-  const P = [['Mercury', .383, '#b7b7b7', '#5d5d5d'], ['Venus', .949, '#f3dca4', '#c4954a'], ['Earth', 1, null, null], ['Mars', .532, null, null]];
-  const R = 128; let x = 820;
-  P.forEach(([name, k, c1, c2], i) => {
-    const r = R * k, s = popS(c, c0 + i * .35, .5), cx = x + r, cy = 470;
-    if (s > 0) {
-      g.save(); g.globalAlpha *= a; g.translate(cx, cy); g.scale(s, s);
-      if (name === 'Earth') planet(EARTH, 0, 0, r); else if (name === 'Mars') planet(MARS, 0, 0, r);
-      else { const gr = g.createRadialGradient(-r * .35, -r * .35, r * .1, 0, 0, r); gr.addColorStop(0, c1); gr.addColorStop(1, c2); g.fillStyle = gr; circlePath(0, 0, r); g.fill(); }
+  const P = [['Mercury', .383], ['Venus', .949], ['Earth', 1], ['Mars', .532]];
+  const Rr = 124; let x = 800;
+  P.forEach(([name, k], i) => {
+    const r = Rr * k, p = appear(c, c0 + i * .35), cx = x + r, cy = 450;
+    if (p > 0) {
+      g.save(); g.globalAlpha *= a * p;
+      if (name === 'Mars') marsDisk(cx, cy, r); else { stroke(4); circlePath(cx, cy, r); g.stroke(); if (name === 'Earth') { g.beginPath(); g.ellipse(cx, cy, r, r * .12, 0, 0, 7); g.stroke(); } }
       g.restore();
-      T(name, cx, cy + R + 64, {size: 36, align: 'center', a: a * clamp(s)});
+      T(name, cx, cy + Rr + 64, {size: 30, align: 'center', a: a * p});
     }
-    x += r * 2 + 70;
+    x += r * 2 + 72;
   });
-  T('The four rocky planets · sizes to scale', 1290, 820, {size: 26, weight: 600, align: 'center', a: a * appear(c, c0 + 1.2), color: 'rgba(255,255,255,.75)'});
+  T('The four rocky planets, sizes to scale', 800, 760, {size: 24, weight: 400, a: a * appear(c, c0 + 1.2), color: pa(.7)});
 }
-function trajectory(t, c, c0, c1, days, name, color, a = 1) {
+function trajectory(t, c, c0, c1, days, name, a = 1) {
   if (a <= 0) return; g.save(); g.globalAlpha *= a;
   space(t, 1);
-  const sx = 680, sy = 560, rE = 230, rM = 350;
-  const sg = g.createRadialGradient(sx, sy, 0, sx, sy, 95); sg.addColorStop(0, '#fffbe6'); sg.addColorStop(.28, '#ffd34d'); sg.addColorStop(1, 'rgba(255,170,40,0)');
-  g.fillStyle = sg; circlePath(sx, sy, 95); g.fill();
-  g.setLineDash([6, 12]); g.strokeStyle = 'rgba(255,255,255,.28)'; g.lineWidth = 2; circlePath(sx, sy, rE); g.stroke(); circlePath(sx, sy, rM); g.stroke(); g.setLineDash([]);
+  const sx = 640, sy = 540, rE = 230, rM = 350;
+  g.fillStyle = PAPER; circlePath(sx, sy, 26); g.fill();
+  g.setLineDash([4, 12]); stroke(2, pa(.35)); circlePath(sx, sy, rE); g.stroke(); circlePath(sx, sy, rM); g.stroke(); g.setLineDash([]);
   const u = E.io(ramp(c, c0, c1));
   const pt = s => { const th = Math.PI + s * Math.PI, r = rE + (rM - rE) * (1 - Math.cos(Math.PI * s)) / 2; return [sx + r * Math.cos(th), sy + r * Math.sin(th)]; };
-  g.strokeStyle = 'rgba(255,255,255,.22)'; g.lineWidth = 3; g.setLineDash([3, 10]); g.beginPath(); for (let i = 0; i <= 80; i++) { const [px, py] = pt(i / 80); i ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke(); g.setLineDash([]);
-  g.strokeStyle = color; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); for (let i = 0; i <= 80; i++) { const [px, py] = pt(u * i / 80); i ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke();
-  planet(EARTH, sx - rE, sy, 34); T('Earth', sx - rE, sy + 78, {size: 30, align: 'center', weight: 700});
-  planet(MARS, sx + rM, sy, 26); T('Mars', sx + rM, sy + 70, {size: 30, align: 'center', weight: 700});
-  const [px, py] = pt(u);
-  const cg = g.createRadialGradient(px, py, 0, px, py, 30); cg.addColorStop(0, '#fff'); cg.addColorStop(.35, color); cg.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = cg; circlePath(px, py, 30); g.fill();
-  T(name, px, py - 38, {size: 30, align: 'center', weight: 800, color});
-  T(String(Math.round(days * u)), 1480, 600, {size: 230, align: 'center'});
-  T('DAYS IN SPACE', 1480, 690, {size: 56, align: 'center', color, ls: 4});
-  T('Illustration · not to scale', sx, sy + rM + 80, {size: 24, weight: 600, align: 'center', color: 'rgba(255,255,255,.6)', shadow: 0});
+  stroke(2, pa(.3)); g.setLineDash([2, 10]); g.beginPath(); for (let i = 0; i <= 80; i++) { const [px, py] = pt(i / 80); i ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke(); g.setLineDash([]);
+  stroke(3); g.beginPath(); for (let i = 0; i <= 80; i++) { const [px, py] = pt(u * i / 80); i ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke();
+  g.fillStyle = INK; stroke(3); circlePath(sx - rE, sy, 20); g.fill(); g.stroke(); T('Earth', sx - rE, sy + 58, {size: 24, align: 'center'});
+  marsDisk(sx + rM, sy, 18); T('Mars', sx + rM, sy + 54, {size: 24, align: 'center'});
+  const [px, py] = pt(u); g.fillStyle = RED; circlePath(px, py, 10); g.fill();
+  T(name, px, py - 26, {size: 24, align: 'center'});
+  D(String(Math.round(days * u)), R, 560, {size: 220, align: 'right'});
+  T('DAYS IN SPACE', R, 626, {size: 30, align: 'right', ls: 4});
+  T('Illustration, not to scale', sx, sy + rM + 70, {size: 20, weight: 400, align: 'center', color: pa(.55)});
   g.restore();
 }
 function particles(t, n, seed, color, {speed = 60, size = 3, drift = 0, a = 1} = {}) {
@@ -697,6 +678,8 @@ function particles(t, n, seed, color, {speed = 60, size = 3, drift = 0, a = 1} =
     const y = (y0 + t * sp) % (H + 40) - 20, x = (x0 + t * drift * (.5 + r()) + W) % W; g.beginPath(); g.arc(x, y, sz, 0, 7); g.fill(); }
   g.restore();
 }
+function check(x, y, s = 1, a = 1) { if (a <= 0) return; g.save(); g.globalAlpha *= a; stroke(7 * s, RED); g.beginPath(); g.moveTo(x - 14 * s, y); g.lineTo(x - 3 * s, y + 12 * s); g.lineTo(x + 18 * s, y - 14 * s); g.stroke(); g.restore(); }
+function leader(x0, y0, x1, y1, a = 1) { if (a <= 0) return; g.save(); g.globalAlpha *= a; stroke(2); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.fillStyle = PAPER; circlePath(x1, y1, 5); g.fill(); g.restore(); }
 
 /* ---------------- scenes ---------------- */
 const SCN = {};
@@ -704,492 +687,473 @@ SCN.intro = (sc, t) => { drawVideo(VID.intro, 0, 0, W, H); };
 
 SCN.landers = (sc, t) => {
   const A1 = TL.at['01'], A2 = TL.at['02'];
-  g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+  fill('#000');
   stars(t, ramp(t, INTRO_END, INTRO_END + 1.2));
   const mp = E.out(ramp(t, INTRO_END + .3, INTRO_END + 2.2));
-  planet(MARS, 1540, lerp(1760, 1300, mp), 640, mp);
-  const a2 = win(t, 9.35, A1 + 8.3, .35), s2 = popS(t, 9.35, .55);
-  if (a2 > 0) {
-    g.save(); g.globalAlpha *= a2; g.translate(860, 470); g.scale(s2, s2);
-    T('2', -30, 100, {size: 340, color: '#ff8a3d', align: 'right'});
-    T('MARS', 0, -6, {size: 120, ls: 6}); T('LANDERS', 0, 104, {size: 120, ls: 6});
-    g.restore();
-  }
+  marsDisk(1560, lerp(1800, 1360, mp), 600, mp);
+  const ta = win(t, 9.35, A1 + 8.3, .35), tr = rise(t, 9.35);
+  if (ta > 0) { rule(M, 360 + tr.dy, 120, ta); D('2 Mars landers', M, 500 + tr.dy, {size: 118, fit: 1150, a: ta}); }
   const tIns = A1 + 9.78, tPhx = A1 + 10.58, tOut = A2 + 4.3;
-  const fall = E.in(ramp(t, tOut, tOut + .75)), fa = 1 - ramp(t, tOut + .35, tOut + .75), fl = Math.sin(t * 1.4) * 8;
-  if (t >= tIns) card('insight-art', 690, 470 + fl + fall * 800, 560, 400, {rot: -6 - fall * 16, s: popS(t, tIns, .55), a: fa, cap: 'InSight', fx: .5});
-  if (t >= tPhx) card('phoenix-selfie', 1240, 500 - fl + fall * 800, 470, 400, {rot: 5 + fall * 18, s: popS(t, tPhx, .55), a: fa, cap: 'Phoenix'});
-  chip('LAND ON MARS', 720, 838, {a: win(t, A2 + 1.5, tOut + .6, .3), s: popS(t, A2 + 1.5, .45)});
-  chip('DO SCIENCE', 1200, 838, {a: win(t, A2 + 3.0, tOut + .6, .3), s: popS(t, A2 + 3.0, .45), color: '#4cc3ff'});
+  const out = E.in(ramp(t, tOut, tOut + .6)), fa = 1 - out;
+  const r1 = rise(t, tIns), r2 = rise(t, tPhx);
+  if (t >= tIns) plate('insight-art', 552, 220, 600, 400, {a: r1.a * fa, dy: r1.dy + out * 40, cap: 'InSight', fx: .5});
+  if (t >= tPhx) plate('phoenix-selfie', 1224, 220, 600, 400, {a: r2.a * fa, dy: r2.dy + out * 40, cap: 'Phoenix'});
+  tag('Land on Mars', 852, 780, {a: win(t, A2 + 1.5, tOut + .6, .3), align: 'center'});
+  tag('Do science', 1524, 780, {a: win(t, A2 + 3.0, tOut + .6, .3), align: 'center'});
 };
 
 SCN.closer = (sc, t) => {
   const c = clipT('03', t);
   space(t, 1);
   const q = E.io(ramp(c, -.3, 1.0)), z = 1 + 4.5 * E.in(ramp(c, .8, 2.75));
-  const cx = lerp(1540, 960, q), cy = lerp(1300, 600, q), r = lerp(640, 360, q);
+  const cx = lerp(1560, 1100, q), cy = lerp(1360, 600, q), r = lerp(600, 340, q);
   const capX = cx, capY = cy - .9 * r, m = E.io(ramp(z, 1, 2.4));
   const Fx = lerp(capX, W / 2, m), Fy = lerp(capY, H / 2, m);
-  g.save(); g.translate(Fx, Fy); g.scale(z, z); g.translate(-capX, -capY); planet(MARS, cx, cy, r); g.restore();
+  g.save(); g.translate(Fx, Fy); g.scale(z, z); g.translate(-capX, -capY); marsDisk(cx, cy, r); g.restore();
   const la = win(c, .7, 2.0, .3);
-  if (la > 0) { g.save(); g.globalAlpha *= la; g.strokeStyle = '#fff'; g.lineWidth = 4; g.beginPath(); g.moveTo(Fx + 30, Fy - 10); g.lineTo(Fx + 210, Fy - 120); g.stroke(); g.restore();
-    T('THE MARTIAN ARCTIC', Fx + 225, Fy - 120, {size: 52, a: la, ls: 3}); }
-  g.fillStyle = `rgba(232,160,110,${E.in(ramp(c, 2.2, 2.75)) * .85})`; g.fillRect(0, 0, W, H);
+  leader(M + 560, 248, Fx - 30, Fy - 6, la);
+  T('The Martian Arctic', M, 256, {size: 34, a: la, ls: 4});
+  T('where Phoenix was going', M, 300, {size: 26, weight: 400, a: la, color: pa(.7)});
 };
 
 SCN.phxTitle = (sc, t) => {
   const c = clipT('04', t);
-  blurBg('phoenix-site', .45);
-  card('phoenix-site', 1310, 470, 820, 461, {rot: 2, s: popS(c, -.15, .6), cap: 'Phoenix on Mars'});
-  const ta = appear(c, 1.55, .5);
-  T('PHOENIX', 110, 470 + (1 - ta) * 40, {size: 140, a: ta, ls: 6});
-  T('Mars lander · 2007–2008', 118, 548 + (1 - ta) * 40, {size: 44, weight: 700, a: ta, color: '#ffcfb2'});
-  PILL = {text: 'PART 1 · PHOENIX', a: appear(c, .2)};
+  fill(INK);
+  const p = rise(c, -.15);
+  plate('phoenix-site', 964, 200, 860, 484, {a: p.a, dy: p.dy, cap: 'Phoenix at its landing site'});
+  const tr = rise(c, 1.55);
+  rule(M, 330 + tr.dy, 120, tr.a);
+  D('Phoenix', M, 470 + tr.dy, {size: 150, fit: 780, a: tr.a});
+  T('Mars lander, 2007 to 2008', M, 532 + tr.dy, {size: 34, a: tr.a});
+  CHAP = 'Part 1 — Phoenix';
 };
 
 SCN.goals = (sc, t) => {
   const c = clipT('05', t);
-  blurBg('phoenix-site', .62);
-  T('PHOENIX’S MISSION', W / 2, 180, {size: 76, align: 'center', a: appear(c, -.2), ls: 4});
-  const cards = [
-    ['Find the hidden ice', 'Dig down to the ice spotted from orbit and test what it is made of.', 3.4, [3.4, 9.4], (x, y, s) => iceIcon(x, y, s)],
-    ['Was it ever livable?', 'Check if the ice ever melted and if tiny microbes could have lived there.', 9.7, [9.7, 13.6], (x, y, s) => microbeIcon(x, y, s, t)],
-    ['Study the weather', 'Watch clouds, snow and the water cycle in the cold polar air.', 14.1, [14.1, 19.6], (x, y, s) => weatherIcon(x, y, s, t)],
+  fill(INK);
+  const tr = rise(c, -.2);
+  D('Phoenix’s mission', M, 236 + tr.dy, {size: 84, fit: 1300, a: tr.a});
+  const cols = [
+    ['Find the hidden ice', 'Dig down to the ice spotted from orbit and test what it is made of.', 3.4, [3.4, 9.4], (x, y) => iceIcon(x, y, .9)],
+    ['Was it ever livable?', 'Check if the ice ever melted and if tiny microbes could have lived there.', 9.7, [9.7, 13.6], (x, y) => microbeIcon(x, y, .85, t)],
+    ['Study the weather', 'Watch clouds, snow and the water cycle in the cold polar air.', 14.1, [14.1, 19.6], (x, y) => weatherIcon(x, y, .95, t)],
   ];
-  cards.forEach(([title, body, at, [h0, h1], icon], i) => {
-    const s = popS(c, at, .55); if (s <= 0) return;
-    const active = c >= h0 && c < h1 ? 1 : 0, cx = 480 + i * 480, cy = 560;
-    g.save(); g.translate(cx, cy); g.scale(s * (1 + active * .04), s * (1 + active * .04));
-    g.save(); if (active) { g.shadowColor = 'rgba(255,138,61,.9)'; g.shadowBlur = 40; }
-    panel(-205, -250, 410, 520, 1); g.restore();
-    if (active) { g.strokeStyle = '#ff8a3d'; g.lineWidth = 5; g.beginPath(); g.roundRect(-205, -250, 410, 520, 22); g.stroke(); }
-    g.fillStyle = '#ff8a3d'; circlePath(-160, -205, 30); g.fill(); T(String(i + 1), -160, -192, {size: 40, align: 'center', color: '#160a03', shadow: 0});
-    icon(0, -110, .95);
-    T(title, 0, 60, {size: 42, align: 'center', shadow: 0});
-    T(body, 0, 116, {size: 29, weight: 600, align: 'center', maxW: 340, color: 'rgba(255,255,255,.85)', shadow: 0});
-    g.restore();
+  cols.forEach(([title, body, at, [h0, h1], icon], i) => {
+    const r = rise(c, at); if (r.a <= 0) return;
+    const active = c >= h0 && c < h1, a = r.a * (active ? 1 : .42), x = M + i * 584, y = 330 + r.dy;
+    rule(x, y, 64, a, 6);
+    D(pad2(i + 1), x, y + 84, {size: 52, a});
+    g.save(); g.globalAlpha *= a; icon(x + 140, y + 220); g.restore();
+    T(title, x, y + 370, {size: 34, a});
+    T(body, x, y + 414, {size: 25, weight: 400, maxW: 500, a, color: pa(.78), lh: 1.3});
   });
-  PILL = {text: 'PART 1 · PHOENIX', a: 1};
+  CHAP = 'Part 1 — Phoenix';
 };
 
 SCN.launch = (sc, t) => {
   const c = clipT('06', t);
-  // A + B: Florida launch
   if (c < 4.6) {
-    full('phx-launch-1', {z: 1 + .1 * ramp(c, -.4, 4.6), fy: .55, dim: .15});
-    const bb = appear(c, 2.35, .5);
-    if (bb > 0) { g.save(); g.globalAlpha *= bb; g.drawImage(BLUR['phx-launch-1'], 0, 0, W, H); g.fillStyle = 'rgba(3,4,10,.45)'; g.fillRect(0, 0, W, H); g.restore(); }
-    card('phx-launch-2', 1380, 500, 470, 700, {rot: 4, s: popS(c, 2.4, .55), fy: .5});
-    dateBlock('AUGUST 4, 2007', 'Cape Canaveral, Florida', 110, 250, win(c, .9, 4.4, .4), 'Delta II rocket');
+    full('phx-launch-1', {z: 1 + .08 * ramp(c, -.4, 4.6), fy: .55});
+    veil(.6 * appear(c, 2.35));
+    const p = rise(c, 2.4);
+    plate('phx-launch-2', 1404, 150, 420, 620, {a: p.a, dy: p.dy, cap: 'Liftoff, Aug 4, 2007'});
+    dateBlock('August 4, 2007', 'Cape Canaveral, Florida', 'Delta II rocket', M, 150, win(c, .9, 4.4, .4));
   }
-  // C: 295-day cruise
-  if (c > 4.0 && c < 8.8) trajectory(t, c, 4.4, 7.7, 295, 'Phoenix', '#ff8a3d', win(c, 4.0, 8.8, .45));
-  // D: on its parachute (real HiRISE photo)
+  if (c > 4.0 && c < 8.8) trajectory(t, c, 4.4, 7.7, 295, 'Phoenix', win(c, 4.0, 8.8, .45));
   if (c > 8.3 && c < 12.0) {
     const a = win(c, 8.3, 12.0, .45); g.save(); g.globalAlpha *= a;
-    g.fillStyle = '#0d0d0f'; g.fillRect(0, 0, W, H);
-    const im = IMG['phx-parachute'], s0 = 1820 / im.width, ox = 50, oy = 120;
-    const P = [ox + 105 * s0, oy + 644 * s0], C = [800, 520], z = 1 + 1.7 * E.io(ramp(c, 9.3, 10.9)), k = E.io(ramp(c, 9.3, 10.9));
+    fill(INK);
+    const im = IMG['phx-parachute'], s0 = 1500 / im.width, ox = M, oy = 150;
+    const P = [ox + 105 * s0, oy + 644 * s0], C = [700, 500], k = E.io(ramp(c, 9.3, 10.9)), z = 1 + 1.7 * k;
     const Fx = lerp(P[0], C[0], k), Fy = lerp(P[1], C[1], k);
-    g.save(); g.translate(Fx, Fy); g.scale(z, z); g.translate(-P[0], -P[1]); g.drawImage(im, ox, oy, im.width * s0, im.height * s0);
-    if (c > 9.9) { const pa = appear(c, 9.9, .4) * (.6 + .4 * Math.sin(c * 7)); g.strokeStyle = `rgba(255,138,61,${pa})`; g.lineWidth = 3 / z * 2; circlePath(ox + 92 * s0, oy + 622 * s0, 26); g.stroke(); }
+    g.save(); g.beginPath(); g.rect(0, 0, 1180, H); g.clip();
+    g.translate(Fx, Fy); g.scale(z, z); g.translate(-P[0], -P[1]); g.drawImage(im, ox, oy, im.width * s0, im.height * s0);
+    if (c > 9.9) { g.globalAlpha = a * appear(c, 9.9, .4); stroke(3 / z, RED); circlePath(ox + 92 * s0, oy + 622 * s0, 24); g.stroke(); }
     g.restore();
     g.restore();
-    if (a > .5) { use('phx-parachute'); hit('phx-parachute', 0, 0, W, H); STAMPQ = 'phx-parachute'; }
-    dateBlock('MAY 25, 2008', 'Arriving at Mars', 110, 230, win(c, 8.6, 12.0, .4));
+    if (a > .5) { use('phx-parachute'); hit('phx-parachute', 0, 0, 1180, H); FIGQ = 'phx-parachute'; }
+    dateBlock('May 25, 2008', 'Arriving at Mars', '', M, 150, win(c, 8.6, 12.0, .4));
     const la = win(c, 10.0, 12.0, .3);
-    T('Phoenix on its parachute!', 1110, 470, {size: 58, a: la});
-    T('Photographed from orbit by Mars Reconnaissance Orbiter', 1110, 530, {size: 30, weight: 600, a: la, maxW: 700});
-    T('It looks like it is falling into a crater, but it was about 20 km in front of it!', 1110, 640, {size: 30, weight: 700, a: win(c, 10.5, 12.0, .3), maxW: 700, color: '#ffcfb2'});
+    inkPanel(1180, 0, 740, H, la, 1);
+    rule(1260, 330, 64, la, 6);
+    T('Phoenix on its parachute', 1260, 400, {size: 44, a: la, maxW: 560});
+    T('Photographed from orbit by Mars Reconnaissance Orbiter.', 1260, 520, {size: 26, weight: 400, a: la, maxW: 540, color: pa(.8)});
+    T('It looks like it is falling into a crater, but it was about 20 km in front of it.', 1260, 640, {size: 26, weight: 400, a: win(c, 10.5, 12.0, .3), maxW: 540, color: pa(.8)});
   }
-  // E: landed in the Martian Arctic
   if (c > 11.5) {
     const a = appear(c, 11.5, .45); g.save(); g.globalAlpha *= a;
     space(t, 1);
-    const mx = 1240, my = 560, mr = 340; planet(MARS, mx, my, mr);
-    const pinS = popS(c, 11.9, .5), px = mx - 40, py = my - mr * .72;
-    if (pinS > 0) { g.save(); g.translate(px, py); g.scale(pinS, pinS); g.fillStyle = '#ff3b3b'; g.strokeStyle = '#fff'; g.lineWidth = 5;
-      g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(-26, -40, -30, -60, 0, -72); g.bezierCurveTo(30, -60, 26, -40, 0, 0); g.fill(); g.stroke(); g.fillStyle = '#fff'; circlePath(0, -50, 10); g.fill(); g.restore();
-      g.save(); g.globalAlpha *= clamp(pinS); g.strokeStyle = '#fff'; g.lineWidth = 4; g.beginPath(); g.moveTo(px + 14, py - 56); g.lineTo(px + 250, py - 150); g.stroke(); g.restore();
-      chip('PHOENIX · 68° N', px + 400, py - 150, {s: pinS, color: '#ff3b3b', ink: '#fff', size: 32}); }
+    const mx = 1400, my = 560, mr = 300; marsDisk(mx, my, mr);
+    const pp = appear(c, 11.9, .45), px = mx - 40, py = my - mr * .72;
+    if (pp > 0) { g.save(); g.globalAlpha *= pp; g.fillStyle = INK; circlePath(px, py, 14); g.fill(); g.fillStyle = PAPER; circlePath(px, py, 8); g.fill(); g.restore();
+      leader(R - 300, py - 150, px + 10, py - 8, pp);
+      tag('Phoenix — 68° N', R, py - 150, {a: pp, align: 'right'}); }
     g.restore();
-    const la = appear(c, 11.7, .45);
-    T('LANDED!', 110, 480, {size: 150, a: la, color: '#ff8a3d', ls: 6});
-    T('The Martian Arctic', 118, 560, {size: 50, a: la});
-    T('farther north than any lander before it', 118, 616, {size: 32, weight: 600, a: appear(c, 12.3), color: 'rgba(255,255,255,.85)'});
+    const tr = rise(c, 11.7);
+    rule(M, 330 + tr.dy, 120, tr.a);
+    D('Landed', M, 470 + tr.dy, {size: 140, fit: 720, a: tr.a});
+    T('The Martian Arctic', M, 536 + tr.dy, {size: 40, a: tr.a});
+    T('farther north than any lander before it', M, 584 + tr.dy, {size: 28, weight: 400, a: appear(c, 12.3), color: pa(.75)});
   }
-  PILL = {text: 'PART 1 · PHOENIX', a: 1};
+  CHAP = 'Part 1 — Phoenix';
 };
 
 SCN.landed = (sc, t) => {
   const c = clipT('07', t);
-  blurBg('phx-arrays', .55);
-  card('phx-arrays', 560, 430, 760, 470, {rot: -3, s: popS(c, -.2, .55), cap: 'Phoenix · tested on Earth, 2007'});
-  const bs = popS(c, 2.72, .55), bearOut = E.io(ramp(c, 4.2, 4.9));
-  if (bs > 0) {
-    const bx = lerp(1390, 1370, bearOut), by = lerp(430, 250, bearOut), sc2 = lerp(1, .52, bearOut) * bs;
-    polarBear(bx, by, sc2);
-    T('≈ 350 kg', bx, by + lerp(250, 128, bearOut), {size: lerp(76, 46, bearOut), align: 'center', a: clamp(bs), color: '#ff8a3d'});
-    T('as heavy as a big polar bear (on Earth)', bx, by + lerp(305, 165, bearOut), {size: lerp(32, 24, bearOut), weight: 700, align: 'center', a: clamp(bs) * (1 - bearOut * .2)});
+  fill(INK);
+  const p = rise(c, -.2);
+  plate('phx-arrays', M, 150, 820, 507, {a: p.a, dy: p.dy, cap: 'Phoenix tested on Earth, 2007'});
+  const bp = appear(c, 2.72), mv = E.io(ramp(c, 4.2, 4.9));
+  if (bp > 0) {
+    const bx = lerp(1420, 1600, mv), by = lerp(420, 215, mv), s = lerp(1, .42, mv);
+    polarBear(bx, by, s, bp);
+    T('≈ 350 kg', lerp(1100, 1008, mv), lerp(700, 250, mv), {size: lerp(76, 40, mv), a: bp});
+    T('as heavy as a big polar bear (on Earth)', lerp(1100, 1008, mv), lerp(748, 290, mv), {size: lerp(28, 20, mv), weight: 400, a: bp, color: pa(.78)});
   }
-  factTable(1060, 470, 780, 'PHOENIX · FACT FILE', [
+  factTable(1008, 380, 816, 'Phoenix — fact file', [
     ['Launch mass', '670 kg'], ['Landing mass', '~350 kg'], ['Science payload', '59 kg'], ['Width (panels open)', '5.52 m'],
     ['Body diameter', '1.5 m'], ['Height', '2.2 m'], ['Robotic arm', '2.5 m']], c, 4.5);
-  PILL = {text: 'PART 1 · PHOENIX', a: 1};
+  CHAP = 'Part 1 — Phoenix';
 };
 
 SCN.water = (sc, t) => {
   const c = clipT('08', t);
-  // A: the arm on Mars
   if (c < 9.4) {
-    blurBg('phx-alice', .5);
-    card('phx-alice', 1250, 480, 760, 600, {rot: 2, s: popS(c, -.2, .55), cap: 'Phoenix’s arm meets the rock “Alice”', a: 1 - ramp(c, 4.3, 4.8)});
-    const ta = win(c, .2, 4.6, .4);
-    T('A HISTORIC', 110, 420, {size: 104, a: ta, ls: 4}); T('DISCOVERY', 110, 520, {size: 104, a: ta, ls: 4, color: '#ff8a3d'});
-    // B: water!
-    const wa = win(c, 4.45, 9.4, .4), ws = popS(c, 4.5, .6);
+    fill(INK);
+    const p = rise(c, -.2), fo = 1 - ramp(c, 4.3, 4.8);
+    plate('phx-alice', 1064, 150, 760, 600, {a: p.a * fo, dy: p.dy, cap: 'The arm meets the rock “Alice”, sol 48'});
+    const tr = rise(c, .2), ta = tr.a * fo;
+    rule(M, 300 + tr.dy, 120, ta);
+    D('A historic', M, 420 + tr.dy, {size: 92, fit: 880, a: ta});
+    D('discovery', M, 530 + tr.dy, {size: 92, fit: 880, a: ta});
+    const wa = win(c, 4.45, 9.4, .4);
     if (wa > 0) {
-      g.save(); g.globalAlpha *= wa; g.fillStyle = 'rgba(3,6,18,.7)'; g.fillRect(0, 0, W, H); g.restore();
-      droplet(640, 520, ws * 1.25, wa);
-      T('WATER', 900, 470, {size: 150, a: wa * appear(c, 5.0), ls: 6, color: '#7fd3ff'});
-      T('on Mars, confirmed!', 905, 548, {size: 60, a: wa * appear(c, 5.4)});
-      T('NASA announced it on July 31, 2008', 908, 614, {size: 32, weight: 600, a: wa * appear(c, 6.2), color: 'rgba(255,255,255,.8)'});
+      droplet(470, 520, 1.25, wa);
+      const r2 = rise(c, 5.0);
+      D('Water', 760, 500 + r2.dy, {size: 140, fit: 1000, a: wa * r2.a});
+      T('on Mars, confirmed', 764, 566 + r2.dy, {size: 46, a: wa * r2.a});
+      T('NASA announced it on July 31, 2008.', 764, 622 + r2.dy, {size: 28, weight: 400, a: wa * appear(c, 6.2), color: pa(.75)});
     }
   }
-  // C: arm + trenches
   if (c > 9.0 && c < 13.3) {
-    const a = win(c, 9.0, 13.3, .4); g.save(); g.globalAlpha *= a;
-    space(t, .6); g.fillStyle = 'rgba(40,18,10,.55)'; g.fillRect(0, 0, W, H);
-    card('phx-arm', 420, 470, 430, 640, {rot: -3, s: popS(c, 9.15, .55), cap: 'The robotic arm', fy: .35});
-    card('phx-dodo', 1070, 330, 560, 280, {rot: 3, s: popS(c, 10.75, .5), cap: '“Dodo” trench · Sol 9'});
-    card('phx-stone-soup', 1490, 600, 430, 430, {rot: -4, s: popS(c, 11.2, .5), cap: '“Stone Soup” trench'});
-    chip('2.5 m LONG', 420, 880, {s: popS(c, 9.9, .45)});
+    const a = win(c, 9.0, 13.3, .4); g.save(); g.globalAlpha *= a; fill(INK);
+    const p1 = rise(c, 9.15), p2 = rise(c, 10.75), p3 = rise(c, 11.2);
+    plate('phx-arm', M, 150, 380, 560, {a: p1.a, dy: p1.dy, cap: 'The robotic arm', fy: .35});
+    plate('phx-dodo', 572, 150, 640, 320, {a: p2.a, dy: p2.dy, cap: '“Dodo” trench, sol 9'});
+    plate('phx-stone-soup', 1312, 230, 512, 512, {a: p3.a, dy: p3.dy, cap: '“Stone Soup”, its deepest trench'});
+    tag('Arm: 2.5 m long', M, 800, {a: appear(c, 9.9)});
+    T('Dig!', 572, 640, {size: 64, a: appear(c, 10.9)});
     g.restore();
   }
-  // D: the oven lab
   if (c > 12.9 && c < 16.6) {
-    const a = win(c, 12.9, 16.6, .4); g.save(); g.globalAlpha *= a; space(t, .8); g.restore();
-    oven(620, 560, c, a);
-    T('TEGA', 1000, 440, {size: 120, a: a * appear(c, 13.1), color: '#ff8a3d', ls: 6});
-    T('Tiny ovens on Phoenix heated', 1004, 510, {size: 44, a: a * appear(c, 13.4)});
-    T('the soil samples…', 1004, 562, {size: 44, a: a * appear(c, 13.4)});
-    T('…and found water vapor!', 1004, 650, {size: 50, a: a * appear(c, 14.6), color: '#7fd3ff'});
+    const a = win(c, 12.9, 16.6, .4); g.save(); g.globalAlpha *= a; fill(INK); g.restore();
+    oven(560, 540, c, a);
+    const r1 = rise(c, 13.1);
+    D('TEGA', 960, 430 + r1.dy, {size: 120, a: a * r1.a});
+    T('Tiny ovens on Phoenix heated the soil samples…', 964, 500 + r1.dy, {size: 40, a: a * r1.a, maxW: 820});
+    T('…and found water vapor.', 964, 650, {size: 44, a: a * appear(c, 14.6)});
   }
-  // E: ice just below the surface
   if (c > 16.2) {
     const a = appear(c, 16.2, .45); g.save(); g.globalAlpha *= a;
-    const sky = g.createLinearGradient(0, 0, 0, 430); sky.addColorStop(0, '#b98557'); sky.addColorStop(1, '#e7bf93'); g.fillStyle = sky; g.fillRect(0, 0, W, 430);
-    g.fillStyle = '#8a4a2a'; g.fillRect(0, 430, W, 150);
-    const ice = g.createLinearGradient(0, 580, 0, H); ice.addColorStop(0, '#f2fbff'); ice.addColorStop(1, '#9cc9e6'); g.fillStyle = ice; g.fillRect(0, 580, W, H - 580);
-    const r = rng(3); for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(60,25,12,${.3 + r() * .4})`; g.beginPath(); g.ellipse(r() * W, 440 + r() * 130, 4 + r() * 10, 3 + r() * 6, 0, 0, 7); g.fill(); }
-    g.strokeStyle = 'rgba(120,170,205,.6)'; g.lineWidth = 3; for (let i = 0; i < 14; i++) { const x0 = r() * W, y0 = 620 + r() * 380; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 + 40 + r() * 80, y0 + (r() - .5) * 40); g.stroke(); }
-    // trench being dug
+    fill(INK);
+    g.fillStyle = RED_DEEP; g.fillRect(0, 440, W, 140);
+    g.fillStyle = PAPER; g.fillRect(0, 580, W, H - 580);
+    const r = rng(3); g.fillStyle = ia(.35); for (let i = 0; i < 90; i++) { g.beginPath(); g.ellipse(r() * W, 452 + r() * 116, 4 + r() * 9, 3 + r() * 5, 0, 0, 7); g.fill(); }
+    stroke(2, ia(.25)); for (let i = 0; i < 14; i++) { const x0 = r() * W, y0 = 640 + r() * 360; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0 + 40 + r() * 80, y0 + (r() - .5) * 40); g.stroke(); }
     const d = E.io(ramp(c, 16.5, 18.6)), tw = 300 * clamp(d * 1.4), tdep = 175 * d, tx = 1100;
-    if (d > 0) { g.fillStyle = '#5c2f1b'; g.beginPath(); g.moveTo(tx - tw / 2, 430); g.lineTo(tx - tw / 2 + 30, 430 + tdep); g.lineTo(tx + tw / 2 - 30, 430 + tdep); g.lineTo(tx + tw / 2, 430); g.closePath(); g.fill();
-      if (tdep > 150) { g.fillStyle = '#ffffff'; g.fillRect(tx - tw / 2 + 34, 430 + tdep - 18, tw - 68, 18); } }
-    // scoop + arm
-    const sx = tx + 20 + Math.sin(c * 5) * 18 * (c < 18.6 ? 1 : 0), sy = 430 + tdep - 30;
-    g.strokeStyle = '#d7dbe2'; g.lineWidth = 22; g.lineCap = 'round'; g.beginPath(); g.moveTo(1700, 120); g.lineTo(1420, 260); g.lineTo(sx + 60, sy - 40); g.stroke();
-    g.strokeStyle = INK; g.lineWidth = 4; g.beginPath(); g.moveTo(1700, 120); g.lineTo(1420, 260); g.lineTo(sx + 60, sy - 40); g.stroke();
-    g.fillStyle = '#9aa3ad'; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + 80, sy - 20); g.lineTo(sx + 90, sy + 30); g.lineTo(sx + 10, sy + 40); g.closePath(); g.fill(); g.stroke();
+    if (d > 0) { g.fillStyle = INK; g.beginPath(); g.moveTo(tx - tw / 2, 440); g.lineTo(tx - tw / 2 + 30, 440 + tdep); g.lineTo(tx + tw / 2 - 30, 440 + tdep); g.lineTo(tx + tw / 2, 440); g.closePath(); g.fill(); }
+    const sx = tx + 20 + Math.sin(c * 5) * 18 * (c < 18.6 ? 1 : 0), sy = 440 + tdep - 30;
+    stroke(5); g.beginPath(); g.moveTo(1760, 110); g.lineTo(1440, 250); g.lineTo(sx + 60, sy - 40); g.stroke();
+    g.fillStyle = INK; g.beginPath(); g.moveTo(sx, sy); g.lineTo(sx + 80, sy - 20); g.lineTo(sx + 90, sy + 30); g.lineTo(sx + 10, sy + 40); g.closePath(); g.fill(); g.stroke();
     g.restore();
-    T('SOIL', 120, 525, {size: 54, a: appear(c, 16.8)});
-    const ia = appear(c, 17.4);
-    T('WATER ICE', 120, 690, {size: 86, a: ia, color: '#0e4f86', shadow: 0});
-    T('Phoenix dug, scooped, and tested it.', 124, 746, {size: 34, weight: 700, a: ia, color: '#0e4f86', shadow: 0});
+    T('Soil', M, 524, {size: 34, ls: 3, a: appear(c, 16.8)});
+    const ia2 = appear(c, 17.4);
+    D('Water ice', M, 700, {size: 84, fit: 900, a: ia2, color: INK});
+    T('Phoenix dug, scooped and tested it.', M, 752, {size: 32, a: ia2, color: INK});
     const ja = appear(c, 19.9);
-    if (ja > 0) { g.save(); g.globalAlpha *= ja; g.strokeStyle = '#fff'; g.lineWidth = 6; g.beginPath(); g.moveTo(1330, 432); g.lineTo(1360, 432); g.lineTo(1360, 600); g.lineTo(1330, 600); g.stroke(); g.restore();
-      T('just beneath the surface!', 1385, 535, {size: 46, a: ja}); }
+    if (ja > 0) { g.save(); g.globalAlpha *= ja; stroke(4, RED); g.beginPath(); g.moveTo(1330, 442); g.lineTo(1356, 442); g.lineTo(1356, 600); g.lineTo(1330, 600); g.stroke(); g.restore();
+      T('just beneath the surface', 1380, 530, {size: 34, a: ja}); }
   }
-  PILL = {text: 'PART 1 · PHOENIX', a: 1};
+  CHAP = 'Part 1 — Phoenix';
 };
 
 SCN.lasted = (sc, t) => {
   const c = clipT('09', t);
-  full('phx-panorama', {z: 1.04 + .06 * ramp(c, -.4, 9), fy: .55, dim: .55});
-  T('HOW LONG DID PHOENIX WORK?', W / 2, 200, {size: 70, align: 'center', a: appear(c, -.2), ls: 3});
-  const x0 = 470, wMax = 1200, per = wMax / 160;
-  const bar = (y, label, val, c0, c1, color) => {
+  full('phx-panorama', {z: 1.04 + .06 * ramp(c, -.4, 9), fy: .55, dim: .72});
+  const tr = rise(c, -.2);
+  D('How long did Phoenix work?', M, 250 + tr.dy, {size: 72, fit: 1728, a: tr.a});
+  const x0 = 400, wMax = 1200, per = wMax / 160;
+  const bar = (y, label, val, c0, c1, col) => {
     const p = E.out(ramp(c, c0, c1)), w = val * per * p, a = appear(c, c0 - .3, .3);
-    T(label, x0 - 30, y + 54, {size: 40, align: 'right', a});
-    g.save(); g.globalAlpha *= a; g.fillStyle = 'rgba(255,255,255,.14)'; g.beginPath(); g.roundRect(x0, y, wMax, 76, 38); g.fill();
-    if (w > 4) { g.fillStyle = color; g.beginPath(); g.roundRect(x0, y, Math.max(76, w), 76, 38); g.fill(); }
-    g.restore();
-    T(`${Math.round(val * p)} sols`, x0 + Math.max(76, w) + 24, y + 56, {size: 46, a: a * clamp(p * 4)});
+    T(label, M, y + 40, {size: 26, ls: 3, a});
+    g.save(); g.globalAlpha *= a; g.strokeStyle = pa(.35); g.lineWidth = 1; g.strokeRect(x0 + .5, y + .5, wMax, 56);
+    g.fillStyle = col; g.fillRect(x0, y, w, 56); g.restore();
+    T(`${Math.round(val * p)} sols`, x0 + w + 24, y + 42, {size: 38, a: a * clamp(p * 4)});
   };
-  bar(400, 'PLANNED', 90, .6, 3.0, '#9aa3ad');
-  bar(560, 'ACTUAL', 151, 4.5, 7.0, '#ff8a3d');
+  bar(400, 'Planned', 90, .6, 3.0, pa(.5));
+  bar(560, 'Actual', 151, 4.5, 7.0, RED);
   const ba = appear(c, 7.0, .4);
-  if (ba > 0) { g.save(); g.globalAlpha *= ba; g.strokeStyle = '#ffd36e'; g.lineWidth = 5; const xa = x0 + 90 * per, xb = x0 + 151 * per;
-    g.beginPath(); g.moveTo(xa, 680); g.lineTo(xa, 700); g.lineTo(xb, 700); g.lineTo(xb, 680); g.stroke(); g.restore();
-    T('+61 bonus sols!', x0 + 120.5 * per, 760, {size: 46, align: 'center', a: ba, color: '#ffd36e'}); }
-  T('1 sol = 1 Martian day ≈ 24 h 40 min', W / 2, 870, {size: 34, weight: 700, align: 'center', a: appear(c, 1.5), color: 'rgba(255,255,255,.85)'});
-  PILL = {text: 'PART 1 · PHOENIX', a: 1};
+  if (ba > 0) { g.save(); g.globalAlpha *= ba; stroke(3); const xa = x0 + 90 * per, xb = x0 + 151 * per;
+    g.beginPath(); g.moveTo(xa, 640); g.lineTo(xa, 662); g.lineTo(xb, 662); g.lineTo(xb, 640); g.stroke(); g.restore();
+    T('+61 bonus sols', x0 + 120.5 * per, 712, {size: 34, align: 'center', a: ba}); }
+  T('1 sol = 1 Martian day ≈ 24 h 40 min', M, 800, {size: 26, weight: 400, a: appear(c, 1.5), color: pa(.8)});
+  CHAP = 'Part 1 — Phoenix';
 };
 
 SCN.family = (sc, t) => {
   const c = clipT('10', t);
-  space(t, 1);
-  // A: same design
+  fill(INK);
   if (c < 5.4) {
-    const a = 1 - ramp(c, 4.8, 5.4);
-    g.save(); g.globalAlpha *= a;
-    T('A FAMILY OF LANDERS', W / 2, 170, {size: 72, align: 'center', a: appear(c, -.2), ls: 4});
-    card('phx-arrays', 540, 500, 640, 400, {rot: -3, s: popS(c, -.1, .55), cap: 'Phoenix · 2007'});
-    card('ins-assembly-1', 1380, 500, 640, 420, {rot: 3, s: popS(c, .7, .55), cap: 'InSight · being built, 2015'});
+    const fo = 1 - ramp(c, 4.8, 5.4); g.save(); g.globalAlpha *= fo;
+    const tr = rise(c, -.2);
+    D('A family of landers', M, 236 + tr.dy, {size: 84, fit: 1500, a: tr.a});
+    const p1 = rise(c, -.1), p2 = rise(c, .7);
+    plate('phx-arrays', M, 320, 700, 432, {a: p1.a, dy: p1.dy, cap: 'Phoenix, 2007'});
+    plate('ins-assembly-1', 1124, 320, 700, 432, {a: p2.a, dy: p2.dy, cap: 'InSight being built, 2015'});
     const la = appear(c, 1.6, .4);
-    if (la > 0) { g.save(); g.globalAlpha *= la; g.strokeStyle = '#ff8a3d'; g.lineWidth = 7; g.setLineDash([14, 12]); g.beginPath(); g.moveTo(880, 500); g.lineTo(1030, 500); g.stroke(); g.setLineDash([]);
-      g.fillStyle = '#ff8a3d'; g.beginPath(); g.moveTo(1050, 500); g.lineTo(1020, 482); g.lineTo(1020, 518); g.closePath(); g.fill(); g.restore();
-      chip('SAME DESIGN!', 960, 420, {s: popS(c, 1.6, .45)}); }
+    if (la > 0) { g.save(); g.globalAlpha *= la; stroke(3); g.setLineDash([10, 10]); g.beginPath(); g.moveTo(820, 536); g.lineTo(1086, 536); g.stroke(); g.setLineDash([]);
+      g.fillStyle = PAPER; g.beginPath(); g.moveTo(1104, 536); g.lineTo(1080, 522); g.lineTo(1080, 550); g.closePath(); g.fill(); g.restore();
+      tag('Same design', 962, 480, {a: la, fillRed: true, align: 'center'}); }
     g.restore();
   }
-  // B: a decade later
   if (c > 4.9 && c < 7.9) {
-    const a = win(c, 4.9, 7.9, .4), y = 540, xa = 360, xb = 1560;
-    T('NASA LAUNCHED INSIGHT', W / 2, 300, {size: 70, align: 'center', a, ls: 3});
-    g.save(); g.globalAlpha *= a;
-    g.strokeStyle = 'rgba(255,255,255,.3)'; g.lineWidth = 8; g.lineCap = 'round'; g.beginPath(); g.moveTo(xa, y); g.lineTo(xb, y); g.stroke();
-    const p = E.io(ramp(c, 5.3, 7.0)); g.strokeStyle = '#ff8a3d'; g.beginPath(); g.moveTo(xa, y); g.lineTo(lerp(xa, xb, p), y); g.stroke();
-    for (let yr = 2007; yr <= 2018; yr++) { const x = lerp(xa, xb, (yr - 2007) / 11); g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(x - 2, y - 16, 4, 32); }
+    const a = win(c, 4.9, 7.9, .4), y = 600;
+    D('NASA launched InSight', M, 330, {size: 84, fit: 1500, a});
+    g.save(); g.globalAlpha *= a; g.fillStyle = pa(.3); g.fillRect(M, y - 1, R - M, 2);
+    const p = E.io(ramp(c, 5.3, 7.0)); g.fillStyle = RED; g.fillRect(M, y - 3, (R - M) * p, 6);
+    for (let yr = 2007; yr <= 2018; yr++) { const x = lerp(M, R, (yr - 2007) / 11); g.fillStyle = pa(.6); g.fillRect(x - 1, y - 14, 2, 28); }
     g.restore();
-    T('2007', xa, y + 80, {size: 56, align: 'center', a}); T('Phoenix', xa, y - 40, {size: 40, align: 'center', a, color: '#ffcfb2'});
-    T('2018', xb, y + 80, {size: 56, align: 'center', a: a * appear(c, 6.6)}); T('InSight', xb, y - 40, {size: 40, align: 'center', a: a * appear(c, 6.6), color: '#7fd3ff'});
+    T('2007', M, y + 70, {size: 40, a}); T('Phoenix', M, y - 40, {size: 28, weight: 400, a, color: pa(.75)});
+    T('2018', R, y + 70, {size: 40, align: 'right', a: a * appear(c, 6.6)}); T('InSight', R, y - 40, {size: 28, weight: 400, align: 'right', a: a * appear(c, 6.6), color: pa(.75)});
   }
-  // C: from the icy surface to the deep interior
   if (c > 7.5) {
     const a = appear(c, 7.5, .45), open = E.io(ramp(c, 10.0, 11.2));
-    marsCut(1000, 560, 330, open, open > .9 ? 'core' : '', a, t);
-    const pa = a * appear(c, 7.8);
-    if (pa > 0) { g.save(); g.globalAlpha *= pa; g.strokeStyle = '#fff'; g.lineWidth = 4; g.beginPath(); g.moveTo(980, 270); g.lineTo(760, 210); g.stroke(); g.restore(); }
-    T('Phoenix:', 220, 190, {size: 44, a: pa, color: '#ffcfb2'}); T('the ICY SURFACE', 220, 246, {size: 58, a: pa});
-    const ia = a * appear(c, 10.4);
-    if (ia > 0) { g.save(); g.globalAlpha *= ia; g.strokeStyle = '#fff'; g.lineWidth = 4; g.beginPath(); g.moveTo(1110, 480); g.lineTo(1350, 420); g.stroke(); g.restore(); }
-    T('InSight:', 1360, 380, {size: 44, a: ia, color: '#7fd3ff'}); T('the DEEP INTERIOR', 1360, 436, {size: 52, a: ia});
-    T('Illustration · not to scale', 1000, 960, {size: 22, weight: 600, align: 'center', a: open * .7, shadow: 0});
+    const gx = 1240, gy = 560, gr = 300;
+    marsCut(gx, gy, gr, open, open > .9 ? 'core' : '', a, t);
+    const pa1 = a * appear(c, 7.8);
+    T('Phoenix studied', M, 300, {size: 28, weight: 400, a: pa1, color: pa(.75)});
+    D('the icy surface', M, 370, {size: 56, fit: 760, a: pa1});
+    leader(M + 780, 350, gx - 40, gy - gr * .9, pa1);
+    const pi = a * appear(c, 10.4);
+    T('InSight studied', M, 620, {size: 28, weight: 400, a: pi, color: pa(.75)});
+    D('the deep interior', M, 690, {size: 56, fit: 760, a: pi});
+    leader(M + 780, 668, gx - 8, gy + 4, pi);
+    T('Illustration, not to scale', gx, 900, {size: 20, weight: 400, align: 'center', a: open * .7, color: pa(.7)});
   }
-  PILL = {text: c < 5 ? 'PART 1 · PHOENIX' : 'PART 2 · INSIGHT', a: 1};
+  CHAP = c < 5 ? 'Part 1 — Phoenix' : 'Part 2 — InSight';
 };
 
 SCN.liftoff = (sc, t) => {
   const c = clipT('11', t);
   const x = ramp(c, 1.2, 1.9);
-  full('ins-prelaunch', {z: 1.04 + .05 * ramp(c, -.3, 2), fy: .45, dim: .1});
+  full('ins-prelaunch', {z: 1.04 + .05 * ramp(c, -.3, 2), fy: .45});
   full('ins-liftoff', {z: 1 + .08 * ramp(c, 1.2, 5), fy: .55, a: x});
-  dateBlock('MAY 5, 2018', 'Vandenberg Air Force Base, California', 110, 230, appear(c, .3), 'Atlas V rocket');
-  chip('FIRST MISSION TO ANOTHER PLANET LAUNCHED FROM THE U.S. WEST COAST', W / 2, 820, {s: popS(c, 2.1, .5), size: 30, color: '#4cc3ff'});
-  PILL = {text: 'PART 2 · INSIGHT', a: 1};
+  dateBlock('May 5, 2018', 'Vandenberg Air Force Base, California', 'Atlas V rocket', M, 150, appear(c, .3));
+  tag('First mission to another planet launched from the U.S. West Coast', M, 770, {a: appear(c, 2.1), size: 20});
+  CHAP = 'Part 2 — InSight';
 };
 
 SCN.flight = (sc, t) => {
   const c = clipT('12', t);
-  if (c < 3.7) trajectory(t, c, .15, 2.8, 205, 'InSight', '#4cc3ff', 1 - ramp(c, 3.2, 3.7));
+  if (c < 3.7) trajectory(t, c, .15, 2.8, 205, 'InSight', 1 - ramp(c, 3.2, 3.7));
   if (c > 3.1) {
     full('ins-landing-art', {z: 1 + .08 * ramp(c, 3.1, 7.5), fy: .3, a: appear(c, 3.1, .5)});
-    dateBlock('NOVEMBER 26, 2018', 'Elysium Planitia, near Mars’ equator', 110, 230, appear(c, 3.4));
+    dateBlock('November 26, 2018', 'Elysium Planitia, near Mars’ equator', '', M, 150, appear(c, 3.4));
   }
-  PILL = {text: 'PART 2 · INSIGHT', a: 1};
+  CHAP = 'Part 2 — InSight';
 };
 
 SCN.giraffe = (sc, t) => {
   const c = clipT('13', t);
-  blurBg('ins-concept', .55);
-  const cw = 840, ch = 630, ccx = 570, ccy = 450;
-  card('ins-concept', ccx, ccy, cw, ch, {s: popS(c, -.2, .55), cap: 'InSight', z: 1});
-  const left = ccx - cw / 2 + .112 * cw, right = ccx - cw / 2 + .885 * cw, ly = ccy - (ch + 16 + 72) / 2 + 16 + .405 * ch - 26;
+  fill(INK);
+  const pw = 800, ph = 600, px = M, py = 150, p = rise(c, -.2);
+  plate('ins-concept', px, py, pw, ph, {a: p.a, dy: p.dy, cap: 'InSight with its solar panels open'});
+  const left = px + .112 * pw, right = px + .885 * pw, ly = py + .4375 * ph - 34 + p.dy;
   const mp = E.out(ramp(c, 1.0, 1.8));
   if (mp > 0) {
     const mid = (left + right) / 2, hw = (right - left) / 2 * mp;
-    g.save(); g.strokeStyle = '#ffd36e'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.moveTo(mid - hw, ly); g.lineTo(mid + hw, ly);
-    g.moveTo(mid - hw, ly - 22); g.lineTo(mid - hw, ly + 22); g.moveTo(mid + hw, ly - 22); g.lineTo(mid + hw, ly + 22); g.stroke(); g.restore();
-    chip('≈ 6 m WIDE', mid, ly - 64, {s: popS(c, 1.5, .45), color: '#ffd36e'});
+    g.save(); stroke(4); g.beginPath(); g.moveTo(mid - hw, ly); g.lineTo(mid + hw, ly); g.stroke();
+    stroke(4, RED); g.beginPath(); g.moveTo(mid - hw, ly - 20); g.lineTo(mid - hw, ly + 20); g.moveTo(mid + hw, ly - 20); g.lineTo(mid + hw, ly + 20); g.stroke(); g.restore();
+    tag('≈ 6 m wide', mid, ly - 48, {a: appear(c, 1.5), fillRed: true, align: 'center'});
   }
-  const gs = popS(c, 2.25, .55), gOut = E.io(ramp(c, 4.3, 5.0));
-  if (gs > 0 && gOut < 1) {
-    const gx = lerp(1420, 1990, gOut);
-    giraffe(gx, 900, 600 * clamp(gs, 0, 1.2));
-    g.save(); g.globalAlpha *= clamp(gs) * (1 - gOut); g.strokeStyle = '#ffd36e'; g.lineWidth = 6; g.beginPath(); g.moveTo(gx + 170, 300); g.lineTo(gx + 170, 900); g.moveTo(gx + 150, 300); g.lineTo(gx + 190, 300); g.moveTo(gx + 150, 900); g.lineTo(gx + 190, 900); g.stroke(); g.restore();
-    T('a tall giraffe', gx + 200, 560, {size: 34, a: clamp(gs) * (1 - gOut)}); T('≈ 5.5–6 m', gx + 200, 606, {size: 40, a: clamp(gs) * (1 - gOut), color: '#ffd36e'});
+  const gp = appear(c, 2.25), gOut = E.io(ramp(c, 4.3, 5.0));
+  if (gp > 0 && gOut < 1) {
+    const gx = lerp(1250, 1400, gOut), ga = gp * (1 - gOut);
+    giraffe(gx, 860, 600, ga);
+    g.save(); g.globalAlpha *= ga; stroke(3); g.beginPath(); g.moveTo(gx + 250, 260); g.lineTo(gx + 250, 860); g.moveTo(gx + 234, 260); g.lineTo(gx + 266, 260); g.moveTo(gx + 234, 860); g.lineTo(gx + 266, 860); g.stroke(); g.restore();
+    T('A tall giraffe', gx + 280, 548, {size: 28, a: ga}); T('≈ 5.5–6 m', gx + 280, 588, {size: 28, weight: 400, a: ga, color: pa(.8)});
   }
-  T('Solar panels open: InSight is about as WIDE as a tall giraffe is TALL', 690, 862, {size: 32, weight: 700, align: 'center', maxW: 700, a: appear(c, 3.1), color: '#fff'});
-  factTable(1060, 300, 780, 'INSIGHT · FACT FILE', [
+  T('With its solar panels open, InSight is about as wide as a tall giraffe is tall.', 1008, 196, {size: 28, maxW: 816, a: appear(c, 3.1)});
+  factTable(1008, 300, 816, 'InSight — fact file', [
     ['Launch mass', '694 kg'], ['Landing mass', '359 kg'], ['Science payload', '50 kg'], ['Width (panels open)', '6 m'],
     ['Body diameter', '1.56 m'], ['Height', '~1 m'], ['Robotic arm', '1.8 m']], c, 4.7);
-  PILL = {text: 'PART 2 · INSIGHT', a: 1};
+  CHAP = 'Part 2 — InSight';
 };
 
 SCN.igoals = (sc, t) => {
   const c = clipT('14', t);
-  space(t, .7);
-  // left board
-  panel(50, 150, 640, 620, 1);
+  fill(INK);
   const gA = 1 - ramp(c, 13.2, 13.7), dA = ramp(c, 13.6, 14.1);
-  T('INSIGHT’S GOALS', 90, 230, {size: 50, a: gA, color: '#ff8a3d', ls: 2, shadow: 0});
-  const goals = [['Study Mars’ inner layers', .5, 4.7], ['Measure marsquakes & meteorite impacts', 5.0, 8.5], ['Track how Mars changed over time', 8.6, 10.6], ['Learn how rocky planets form', 10.7, 13.4]];
-  let y = 300;
-  goals.forEach(([txt, a0, a1], i) => {
+  D('InSight’s mission', M, 220, {size: 56, fit: 560, a: gA * appear(c, -.2)});
+  const goals = [['Study Mars’ inner layers', .5, 4.7], ['Measure marsquakes and meteorite impacts', 5.0, 8.5], ['Track how Mars changed over time', 8.6, 10.6], ['Learn how rocky planets form', 10.7, 13.4]];
+  let y = 320;
+  goals.forEach(([txt, a0, a1]) => {
     const a = gA * appear(c, a0, .4), on = c >= a0 && c < a1;
-    if (a > 0) { g.save(); g.globalAlpha *= a; g.fillStyle = on ? '#ff8a3d' : 'rgba(255,255,255,.2)'; circlePath(118, y + 2, 24); g.fill(); g.restore();
-      T(String(i + 1), 118, y + 14, {size: 32, align: 'center', a, color: on ? '#160a03' : '#fff', shadow: 0}); }
-    g.save(); g.font = `${on ? 800 : 600} 32px "Baloo 2"`; const n = wrap(txt, 500).length; g.restore();
-    T(txt, 160, y + 12, {size: 32, weight: on ? 800 : 600, a, maxW: 500, shadow: 0, color: on ? '#fff' : 'rgba(255,255,255,.8)'});
-    y += 40 + n * 38;
+    if (a > 0) { g.save(); g.globalAlpha *= a; if (on) { g.fillStyle = RED; g.fillRect(M, y - 22, 24, 24); } else { g.strokeStyle = pa(.6); g.lineWidth = 2; g.strokeRect(M + 1, y - 21, 22, 22); } g.restore(); }
+    g.save(); g.font = `${on ? 700 : 400} 30px ${F_TEXT}`; const n = wrap(txt, 500).length; g.restore();
+    T(txt, M + 48, y, {size: 30, weight: on ? 700 : 400, a, maxW: 500, color: on ? PAPER : pa(.75)});
+    y += 34 + n * 38;
   });
-  T('DISCOVERIES', 90, 230, {size: 50, a: dA, color: '#7fd3ff', ls: 2, shadow: 0});
-  T('2018 – 2022', 92, 272, {size: 30, a: dA, weight: 700, shadow: 0, color: 'rgba(255,255,255,.7)'});
+  D('Discoveries', M, 220, {size: 56, fit: 560, a: dA});
+  T('2018 to 2022', M, 266, {size: 26, weight: 400, a: dA, color: pa(.7)});
   const finds = [['1,300+ marsquakes recorded', 18.0], ['Mars’ core is liquid', 22.1], ['Crust thickness measured', 24.95], ['Meteorite impacts heard', 26.85]];
   finds.forEach(([txt, a0], i) => {
-    const a = dA * appear(c, a0, .4), yy = 345 + i * 105; if (a <= 0) return;
-    const s = popS(c, a0, .45);
-    g.save(); g.translate(118, yy); g.scale(s, s); g.globalAlpha *= a; g.fillStyle = '#1f8a4c'; circlePath(0, 0, 28); g.fill();
-    g.strokeStyle = '#fff'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.moveTo(-12, 0); g.lineTo(-3, 10); g.lineTo(14, -10); g.stroke(); g.restore();
-    T(txt, 162, yy + 14, {size: 38, a, maxW: 500, shadow: 0});
+    const a = dA * appear(c, a0, .4), yy = 350 + i * 96; if (a <= 0) return;
+    check(M + 16, yy - 10, 1, a);
+    T(txt, M + 52, yy, {size: 32, a, maxW: 520});
   });
-  // right side visuals
-  const RX = 1290, RY = 470;
-  if (c < 5.2) card('mars-layers', RX, RY, 1060, 596, {s: popS(c, -.25, .55), a: 1 - ramp(c, 4.7, 5.2), cap: 'Inside Mars'});
+  const RX = 760;
+  if (c < 5.2) { const p = rise(c, -.25); plate('mars-layers', RX, 150, 1064, 598, {a: p.a * (1 - ramp(c, 4.7, 5.2)), dy: p.dy, cap: 'How InSight studies Mars’ inner layers'}); }
   if (c > 4.7 && c < 8.9) {
-    const a = win(c, 4.7, 8.9, .4);
-    card('ins-seis', RX - 120, RY, 600, 600, {rot: -2, s: popS(c, 4.75, .5), a, cap: 'Placing the seismometer · Dec 2018'});
-    g.save(); g.globalAlpha *= a; g.strokeStyle = '#7fd3ff'; g.lineWidth = 5; g.beginPath();
-    for (let i = 0; i <= 200; i++) { const xx = 1500 + i * 1.6, amp = 70 * Math.exp(-Math.pow((i - 100) / 45, 2)) * appear(c, 5.2, 1.2); g.lineTo(xx, RY + Math.sin(i * .9 + c * 10) * amp); } g.stroke(); g.restore();
-    T('feels quakes', 1660, RY + 160, {size: 34, align: 'center', a});
+    const a = win(c, 4.7, 8.9, .4), p = rise(c, 4.75);
+    plate('ins-seis', RX, 150, 600, 600, {a: a * p.a, dy: p.dy, cap: 'Placing the seismometer, Dec 2018'});
+    g.save(); g.globalAlpha *= a; stroke(4); g.beginPath();
+    for (let i = 0; i <= 200; i++) { const xx = 1420 + i * 2, amp = 70 * Math.exp(-Math.pow((i - 100) / 45, 2)) * appear(c, 5.2, 1.2); g.lineTo(xx, 450 + Math.sin(i * .9 + c * 10) * amp); } g.stroke(); g.restore();
+    T('feels marsquakes', 1620, 600, {size: 28, align: 'center', a});
   }
-  if (c > 8.4 && c < 11.0) card('ins-hp3', RX, RY, 560, 560, {rot: 2, s: popS(c, 8.45, .5), a: win(c, 8.4, 11.0, .4), cap: 'Heat probe · Feb 2019'});
+  if (c > 8.4 && c < 11.0) { const p = rise(c, 8.45); plate('ins-hp3', 960, 150, 600, 600, {a: win(c, 8.4, 11.0, .4) * p.a, dy: p.dy, cap: 'The heat probe, Feb 2019'}); }
   if (c > 10.6 && c < 13.9) rockyPlanets(c, 10.7, win(c, 10.6, 13.9, .4));
   if (c > 13.5 && c < 18.1) {
-    const a = win(c, 13.5, 18.1, .4);
-    card('ins-shield', RX, RY + 20, 620, 620, {rot: -2, s: popS(c, 13.55, .5), a, cap: 'Wind & heat shield over the seismometer'});
-    chip('4 YEARS ON MARS', RX, 140, {s: popS(c, 13.9, .45), a, size: 44});
+    const a = win(c, 13.5, 18.1, .4), p = rise(c, 13.55);
+    plate('ins-shield', 960, 200, 580, 580, {a: a * p.a, dy: p.dy, cap: 'Wind and heat shield over the seismometer'});
+    tag('4 years on Mars', 960, 140, {a: a * appear(c, 13.9), fillRed: true});
   }
   if (c > 17.8 && c < 22.3) {
-    const a = win(c, 17.8, 22.3, .4), im = IMG['seismogram'], pw = 1120, ph = pw * im.height / im.width, px = RX - pw / 2, py = RY - ph / 2 + 40;
-    g.save(); g.globalAlpha *= a; g.fillStyle = '#fff'; g.beginPath(); g.roundRect(px - 20, py - 20, pw + 40, ph + 40, 18); g.fill();
-    const wp = E.lin(ramp(c, 18.0, 20.8)); g.save(); g.beginPath(); g.rect(px, py, pw * wp, ph); g.clip(); g.drawImage(im, px, py, pw, ph); g.restore();
-    if (wp < 1) { g.fillStyle = '#e4002b'; g.fillRect(px + pw * wp - 2, py, 4, ph); }
-    stamp('data', px + pw + 10, py - 8, 'right', 20);
-    g.restore();
-    if (a > .4) { use('seismogram'); hit('seismogram', px - 20, py - 20, pw + 40, ph + 40); }
+    const a = win(c, 17.8, 22.3, .4), im = IMG['seismogram'], pw = 1064, ph = Math.round(pw * im.height / im.width);
+    const wp = E.lin(ramp(c, 18.0, 20.8));
+    plate('seismogram', RX, 400, pw, ph, {a, reveal: wp, cap: 'A real marsquake, recorded July 25, 2019', contain: false});
+    if (wp < 1 && a > 0) { g.save(); g.globalAlpha *= a; g.fillStyle = RED; g.fillRect(RX + pw * wp - 2, 400, 4, ph); g.restore(); }
     const n = Math.round(1300 * E.out(ramp(c, 18.0, 20.6)));
-    T(n >= 1300 ? '1,300+' : n.toLocaleString('en-US'), RX, 230, {size: 150, align: 'center', a});
-    T('MARSQUAKES', RX, 300, {size: 52, align: 'center', a, color: '#7fd3ff', ls: 4});
-    T('A real marsquake recorded on July 25, 2019', RX, py + ph + 70, {size: 28, weight: 700, align: 'center', a});
+    D(n >= 1300 ? '1,300+' : n.toLocaleString('en-US'), RX, 300, {size: 130, a});
+    T('MARSQUAKES', RX, 352, {size: 28, ls: 4, a});
   }
   if (c > 21.9 && c < 25.1) {
-    const a = win(c, 21.9, 25.1, .4);
-    card('mars-core-art', RX, RY + 10, 560, 605, {s: popS(c, 21.95, .5), a, contain: true, cap: 'Waves through the core'});
-    chip('LIQUID CORE', RX, 120, {s: popS(c, 22.4, .45), a, color: '#ffd36e', size: 40});
+    const a = win(c, 21.9, 25.1, .4), p = rise(c, 21.95);
+    plate('mars-core-art', 960, 150, 560, 605, {a: a * p.a, dy: p.dy, contain: true, cap: 'Quake waves passed through the core'});
+    tag('Liquid core', 1560, 200, {a: a * appear(c, 22.4), fillRed: true});
   }
   if (c > 24.8 && c < 27.0) {
     const a = win(c, 24.8, 27.0, .4);
-    marsCut(RX, RY + 20, 330, 1, 'crust', a, t);
-    T('CRUST', RX + 250, RY - 250, {size: 58, a});
-    T('thickness measured', RX + 250, RY - 196, {size: 34, weight: 700, a});
-    T('Illustration · not to scale', RX, 900, {size: 22, weight: 600, align: 'center', a: a * .7, shadow: 0});
+    marsCut(1290, 520, 300, 1, 'crust', a, t);
+    D('Crust', 1290, 170, {size: 56, align: 'center', a});
+    T('thickness measured', 1290, 214, {size: 28, weight: 400, align: 'center', a, color: pa(.8)});
+    T('Illustration, not to scale', 1290, 880, {size: 20, weight: 400, align: 'center', a: a * .7, color: pa(.7)});
   }
   if (c > 26.6) {
-    const a = appear(c, 26.6, .4), vx = 760, vy = 170, vw = 1100, vh = 620;
-    g.save(); g.globalAlpha *= a; g.beginPath(); g.roundRect(vx, vy, vw, vh, 22); g.clip();
-    const sky = g.createLinearGradient(0, vy, 0, vy + vh); sky.addColorStop(0, '#2a1a2e'); sky.addColorStop(1, '#c47a4e'); g.fillStyle = sky; g.fillRect(vx, vy, vw, vh);
-    g.fillStyle = '#9c4d2a'; g.beginPath(); g.moveTo(vx, vy + 470); g.quadraticCurveTo(vx + vw / 2, vy + 430, vx + vw, vy + 470); g.lineTo(vx + vw, vy + vh); g.lineTo(vx, vy + vh); g.closePath(); g.fill();
-    const hp = ramp(c, 26.9, 27.7), ix = vx + 640, iy = vy + 452;
-    if (hp < 1) { const mx = lerp(vx + vw + 60, ix, hp), my = lerp(vy - 60, iy, hp); const tr = g.createLinearGradient(mx, my, mx + 260, my - 200);
-      tr.addColorStop(0, 'rgba(255,240,200,1)'); tr.addColorStop(1, 'rgba(255,160,60,0)'); g.strokeStyle = tr; g.lineWidth = 14; g.lineCap = 'round'; g.beginPath(); g.moveTo(mx, my); g.lineTo(mx + 260, my - 200); g.stroke();
-      g.fillStyle = '#fff3d6'; circlePath(mx, my, 12); g.fill(); }
-    if (c > 27.7) { const k = c - 27.7, fl = Math.max(0, 1 - k * 2.5);
-      g.fillStyle = `rgba(255,220,150,${fl})`; circlePath(ix, iy, 40 + k * 260); g.fill();
-      g.fillStyle = '#5c2a14'; g.beginPath(); g.ellipse(ix, iy + 6, 70, 16, 0, 0, 7); g.fill();
-      g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 4; for (let i = 0; i < 3; i++) { const rr = (k * 300 + i * 90) % 400; g.globalAlpha = a * (1 - rr / 400); g.beginPath(); g.ellipse(ix, iy + 20, rr * 1.5, rr * .3, 0, 0, Math.PI); g.stroke(); }
+    const a = appear(c, 26.6, .4), vx = RX, vy = 150, vw = 1064, vh = 600;
+    g.save(); g.globalAlpha *= a; g.beginPath(); g.rect(vx, vy, vw, vh); g.clip();
+    fill(INK); stroke(3); g.beginPath(); g.moveTo(vx, vy + 470); g.quadraticCurveTo(vx + vw / 2, vy + 440, vx + vw, vy + 470); g.stroke();
+    const hp = ramp(c, 26.9, 27.7), ix = vx + 640, iy = vy + 455;
+    if (hp < 1) { const mx = lerp(vx + vw + 60, ix, hp), my = lerp(vy - 60, iy, hp); stroke(4); g.beginPath(); g.moveTo(mx, my); g.lineTo(mx + 220, my - 170); g.stroke(); g.fillStyle = PAPER; circlePath(mx, my, 9); g.fill(); }
+    if (c > 27.7) { const k = c - 27.7, fl = Math.max(0, 1 - k * 2.2);
+      g.fillStyle = ra(fl); circlePath(ix, iy, 30 + k * 220); g.fill();
+      stroke(3); for (let i = 0; i < 3; i++) { const rr = (k * 300 + i * 90) % 400; g.globalAlpha = a * (1 - rr / 400); g.beginPath(); g.ellipse(ix, iy + 18, rr * 1.5, rr * .3, 0, 0, Math.PI); g.stroke(); }
       g.globalAlpha = a; }
     g.restore();
-    T('InSight “heard” meteorites hitting Mars', vx + vw / 2, vy + vh + 66, {size: 36, align: 'center', a: a * appear(c, 27.2)});
-    T('Illustration', vx + vw - 20, vy + 40, {size: 22, weight: 700, align: 'right', a: a * .8, shadow: 0});
+    g.save(); g.globalAlpha *= a; g.strokeStyle = pa(.35); g.lineWidth = 1; g.strokeRect(vx + .5, vy + .5, vw - 1, vh - 1); g.restore();
+    T('InSight “heard” meteorites hitting Mars', vx, vy + vh + 40, {size: 26, a: a * appear(c, 27.2)});
+    T('ILLUSTRATION', vx, vy + vh + 66, {size: 14, ls: 2, color: RED, a: a * appear(c, 27.2)});
   }
-  PILL = {text: 'PART 2 · INSIGHT', a: 1};
+  CHAP = 'Part 2 — InSight';
 };
 
 SCN.listen = (sc, t) => {
   const c = t - TL.listen;
-  space(t, 1);
-  const v = VID.quake, s = 820, vx = 1150 - s / 2, vy = 120;
-  g.save(); g.shadowColor = 'rgba(127,211,255,.45)'; g.shadowBlur = 50; g.fillStyle = '#000'; g.beginPath(); g.roundRect(vx, vy, s, s, 24); g.fill(); g.restore();
-  g.save(); g.beginPath(); g.roundRect(vx, vy, s, s, 24); g.clip(); drawVideo(v, vx, vy, s, s); g.restore();
-  stamp('data', vx + s - 14, vy + 14, 'right', 20);
-  use('quake'); hit('quake', vx, vy, s, s);
-  const a = appear(c, .1, .5);
-  T('LISTEN!', 110, 300, {size: 130, a, color: '#ff8a3d', ls: 6});
-  T('The biggest marsquake InSight ever recorded', 114, 380, {size: 44, a, maxW: 560});
-  T('About magnitude 5', 114, 500, {size: 40, a: appear(c, .8), color: '#7fd3ff'});
-  T('May 4, 2022 · sol 1,222', 114, 548, {size: 34, weight: 700, a: appear(c, .8)});
-  T('Real seismogram + sonification (its signals turned into sound)', 114, 598, {size: 28, weight: 600, a: appear(c, 1.2), maxW: 520, color: 'rgba(255,255,255,.8)'});
+  fill(INK);
+  plate('quake', 1064, 120, 760, 760, {video: VID.quake, cap: 'The biggest marsquake InSight recorded'});
+  const tr = rise(c, .1);
+  rule(M, 200 + tr.dy, 120, tr.a);
+  D('Listen', M, 340 + tr.dy, {size: 140, fit: 860, a: tr.a});
+  T('The biggest marsquake InSight ever recorded', M, 412 + tr.dy, {size: 40, a: tr.a, maxW: 860});
+  T('About magnitude 5', M, 540, {size: 34, a: appear(c, .8)});
+  T('May 4, 2022, sol 1,222', M, 584, {size: 28, weight: 400, a: appear(c, .8), color: pa(.8)});
+  T('Real seismogram and sonification: the quake’s signals turned into sound.', M, 640, {size: 24, weight: 400, a: appear(c, 1.2), maxW: 860, color: pa(.7)});
   const lvl = QUAKE_ENV[Math.floor((QUAKE_FROM + c) * 30)] || 0, fade = 1 - ramp(c, LISTEN_DUR - 1.4, LISTEN_DUR);
-  g.save(); g.globalAlpha *= a; g.fillStyle = '#fff'; g.beginPath(); g.moveTo(120, 700); g.lineTo(150, 700); g.lineTo(185, 670); g.lineTo(185, 770); g.lineTo(150, 740); g.lineTo(120, 740); g.closePath(); g.fill();
-  for (let i = 0; i < 9; i++) { const hh = 14 + 100 * lvl * fade * (0.55 + 0.45 * Math.sin(i * 1.7 + c * 9)); g.fillStyle = '#7fd3ff'; g.beginPath(); g.roundRect(215 + i * 30, 720 - hh / 2, 18, hh, 9); g.fill(); }
+  const a = appear(c, .4);
+  g.save(); g.globalAlpha *= a; stroke(4); g.fillStyle = INK; g.beginPath(); g.moveTo(M, 760); g.lineTo(M + 28, 760); g.lineTo(M + 60, 732); g.lineTo(M + 60, 828); g.lineTo(M + 28, 800); g.lineTo(M, 800); g.closePath(); g.fill(); g.stroke();
+  for (let i = 0; i < 9; i++) { const hh = 10 + 90 * lvl * fade * (.55 + .45 * Math.sin(i * 1.7 + c * 9)); g.fillStyle = RED; g.fillRect(M + 96 + i * 30, 780 - hh / 2, 16, hh); }
   g.restore();
-  PILL = {text: 'PART 2 · INSIGHT', a: 1};
+  CHAP = 'Part 2 — InSight';
 };
 
 SCN.end = (sc, t) => {
   const c = clipT('15', t);
   if (c < 9.0) {
-    space(t, 1);
-    const dimp = E.io(ramp(c, 6.3, 8.0)), filt = dimp > .01 ? `grayscale(${dimp * .85}) brightness(${1 - dimp * .35})` : '';
-    card('phoenix-selfie', 600, 500, 520, 520, {rot: -4, s: popS(c, -.25, .55), cap: 'Phoenix · 2008', filter: filt, a: 1 - ramp(c, 8.6, 9.0)});
-    card('ins-first-selfie', 1300, 500, 700, 399, {rot: 3, s: popS(c, .1, .55), cap: 'InSight · 2018', filter: filt, a: 1 - ramp(c, 8.6, 9.0)});
-    const ga = win(c, 1.1, 6.5, .5);
-    for (let i = 0; i < 14; i++) { const r = rng(100 + i), x = 250 + r() * 1420, y = 180 + r() * 660; sparkle(x, y, 14 + r() * 16, ga * (.4 + .6 * Math.abs(Math.sin(c * 2.5 + i)))); }
-    T('MISSION ACCOMPLISHED', W / 2, 150, {size: 72, align: 'center', a: win(c, 1.1, 6.6, .4), ls: 4, color: '#ffd36e'});
-    T('BOTH MISSIONS ENDED', W / 2, 150, {size: 72, align: 'center', a: win(c, 6.5, 9.0, .4), ls: 4});
+    fill(INK);
+    const dimp = E.io(ramp(c, 6.3, 8.0)), filt = dimp > .01 ? `grayscale(${dimp}) brightness(${1 - dimp * .3})` : '', fo = 1 - ramp(c, 8.6, 9.0);
+    const p1 = rise(c, -.25), p2 = rise(c, .1);
+    plate('phoenix-selfie', M, 300, 560, 470, {a: p1.a * fo, dy: p1.dy, cap: 'Phoenix, 2008', filter: filt});
+    plate('ins-first-selfie', 720, 300, 824, 470, {a: p2.a * fo, dy: p2.dy, cap: 'InSight, 2018', filter: filt});
+    D('Mission accomplished', M, 236, {size: 84, fit: 1728, a: win(c, 1.1, 6.6, .4)});
+    D('Both missions ended', M, 236, {size: 84, fit: 1728, a: win(c, 6.5, 9.0, .4)});
   }
   if (c > 8.6 && c < 11.8) {
     const a = win(c, 8.6, 11.8, .45), frost = E.io(ramp(c, 8.8, 11.2));
-    full('phx-last-look', {z: 1.02 + .1 * ramp(c, 8.6, 11.8), a, dim: .1 + frost * .35});
+    full('phx-last-look', {z: 1.02 + .1 * ramp(c, 8.6, 11.8), a, dim: .1 + frost * .4});
     g.save(); g.globalAlpha *= a * frost; g.drawImage(FROST, 0, 0); g.restore();
-    particles(t, 140, 21, 'rgba(240,248,255,.9)', {speed: 90, size: 3.2, drift: 14, a: a * frost});
-    T('WINTER CAME', 110, 330, {size: 104, a: a * appear(c, 8.9), ls: 4});
-    T('Phoenix’s solar panels could not', 116, 410, {size: 40, weight: 700, a: a * appear(c, 9.4)});
-    T('make enough power in the dark', 116, 458, {size: 40, weight: 700, a: a * appear(c, 9.4)});
-    T('Sol 151 · one of Phoenix’s last pictures (false color)', 116, 520, {size: 28, weight: 600, a: a * appear(c, 9.8), color: 'rgba(255,255,255,.85)'});
+    particles(t, 140, 21, pa(.9), {speed: 90, size: 3.2, drift: 14, a: a * frost});
+    inkPanel(M - 32, 150, 900, 300, a * appear(c, 8.9));
+    rule(M, 180, 64, a * appear(c, 8.9), 6);
+    D('Winter came', M, 284, {size: 88, fit: 820, a: a * appear(c, 8.9)});
+    T('Phoenix’s solar panels could not make enough power in the dark.', M, 340, {size: 28, maxW: 820, a: a * appear(c, 9.4)});
+    T('Sol 151, one of Phoenix’s last pictures (false color)', M, 420, {size: 20, weight: 400, a: a * appear(c, 9.8), color: pa(.75)});
   }
   if (c > 11.4 && c < 14.7) {
     const a = win(c, 11.4, 14.7, .45);
     full('ins-dusty-panel', {z: 1.02 + .1 * ramp(c, 11.4, 14.7), a, fy: .55});
-    particles(t, 120, 31, 'rgba(196,140,92,.75)', {speed: 40, size: 2.6, drift: 40, a});
-    g.save(); g.globalAlpha *= a * .35 * ramp(c, 11.6, 14.4); g.fillStyle = '#b07a4f'; g.fillRect(0, 0, W, H); g.restore();
-    T('DUST PILED UP', 110, 330, {size: 104, a: a * appear(c, 11.7), ls: 4});
-    T('InSight’s dusty solar panel · April 2022', 116, 400, {size: 36, weight: 700, a: a * appear(c, 12.1)});
+    particles(t, 120, 31, pa(.45), {speed: 40, size: 2.6, drift: 40, a});
+    inkPanel(M - 32, 150, 900, 250, a * appear(c, 11.7));
+    rule(M, 180, 64, a * appear(c, 11.7), 6);
+    D('Dust piled up', M, 284, {size: 88, fit: 820, a: a * appear(c, 11.7)});
+    T('InSight’s dusty solar panel, April 2022', M, 340, {size: 28, a: a * appear(c, 12.1)});
   }
   if (c > 14.4) {
     const a = appear(c, 14.4, .45), gray = E.io(ramp(c, 17.2, 18.6));
-    g.save(); g.globalAlpha *= a; space(t, .5); g.restore();
+    g.save(); g.globalAlpha *= a; fill(INK); g.restore();
     const filt = gray > .01 ? `grayscale(${gray})` : '';
     const ins = 1 - ramp(c, 16.5, 16.9);
     if (ins > 0) {
-      T('THEN & NOW', W / 2, 150, {size: 72, align: 'center', a: a * ins, ls: 4});
-      card('ins-first-selfie', 520, 520, 760, 433, {rot: -2, s: popS(c, 14.45, .5), a: a * ins, cap: 'InSight · Dec 2018'});
-      card('ins-final-selfie', 1400, 520, 760, 456, {rot: 2, s: popS(c, 14.9, .5), a: a * ins, cap: 'InSight · Apr 2022'});
+      D('Then and now', M, 236, {size: 84, fit: 1500, a: a * ins});
+      const p1 = rise(c, 14.45), p2 = rise(c, 14.9);
+      plate('ins-first-selfie', M, 300, 832, 470, {a: a * ins * p1.a, dy: p1.dy, cap: 'InSight, December 2018'});
+      plate('ins-final-selfie', 992, 300, 832, 470, {a: a * ins * p2.a, dy: p2.dy, cap: 'InSight, April 2022'});
     }
     const ph = appear(c, 16.6, .45);
     if (ph > 0) {
-      T('ABANDONED ON THE RED PLANET', W / 2, 150, {size: 66, align: 'center', a: ph, ls: 3});
-      card('phx-site-2008', 560, 540, 560, 553, {rot: -2, s: popS(c, 16.6, .5), a: ph, cap: 'Phoenix site · 2008', filter: filt});
-      card('phx-site-2017', 1360, 540, 560, 553, {rot: 2, s: popS(c, 17.0, .5), a: ph, cap: 'Same place · 2017', filter: filt});
-      T('Dust slowly covered the marks Phoenix left', W / 2, 898, {size: 32, weight: 700, align: 'center', a: ph * appear(c, 17.6), shadow: .8});
+      D('Abandoned on the Red Planet', M, 236, {size: 76, fit: 1728, a: ph});
+      T('Dust slowly covered the marks Phoenix left behind.', M, 286, {size: 28, weight: 400, a: ph * appear(c, 17.6), color: pa(.8)});
+      const p1 = rise(c, 16.6), p2 = rise(c, 17.0);
+      plate('phx-site-2008', 428, 320, 500, 493, {a: ph * p1.a, dy: p1.dy, cap: 'Phoenix’s site, July 2008', filter: filt});
+      plate('phx-site-2017', 992, 320, 500, 493, {a: ph * p2.a, dy: p2.dy, cap: 'Same place, December 2017', filter: filt});
     }
   }
-  PILL = {text: 'THE END OF THE MISSIONS', a: 1};
+  CHAP = 'The end of the missions';
 };
 
 SCN.endcard = (sc, t) => {
   const c = t - TL.endcard;
   space(t, 1);
-  planet(MARS, W / 2, lerp(1980, 1720, E.out(ramp(c, 0, 1.6))), 760);
-  T('ABANDONED,', W / 2, 250, {size: 110, align: 'center', a: appear(c, .3), ls: 6});
-  T('BUT NOT FORGOTTEN.', W / 2, 360, {size: 110, align: 'center', a: appear(c, .9), ls: 6, color: '#ff8a3d'});
-  card('phoenix-selfie', 470, 610, 300, 300, {rot: -6, s: popS(c, 1.2, .5), cap: 'Phoenix'});
-  card('ins-final-selfie', 1450, 610, 420, 252, {rot: 5, s: popS(c, 1.5, .5), cap: 'InSight'});
-  T('Thanks for watching!', W / 2, 870, {size: 54, align: 'center', a: appear(c, 2.6)});
+  marsDisk(W / 2, lerp(2000, 1740, E.out(ramp(c, 0, 1.6))), 760);
+  const r1 = rise(c, .3), r2 = rise(c, .9);
+  D('Abandoned,', W / 2, 250 + r1.dy, {size: 110, fit: 1500, align: 'center', a: r1.a});
+  D('but not forgotten.', W / 2, 380 + r2.dy, {size: 110, fit: 1500, align: 'center', a: r2.a});
+  rule(W / 2 - 60, 420, 120, appear(c, 1.4));
+  const p1 = rise(c, 1.2), p2 = rise(c, 1.5);
+  plate('phoenix-selfie', 300, 500, 300, 300, {a: p1.a, dy: p1.dy, cap: 'Phoenix'});
+  plate('ins-final-selfie', 1320, 520, 420, 252, {a: p2.a, dy: p2.dy, cap: 'InSight'});
+  T('Thanks for watching!', W / 2, 890, {size: 40, align: 'center', a: appear(c, 2.6)});
   T('Made for the NASA Space Apps Challenge 2026 · Pictures and videos: NASA/JPL-Caltech, NASA and mission partners',
-    W / 2, 1050, {size: 22, weight: 600, align: 'center', a: appear(c, 3.0) * (MODE === 'export' ? 1 : 0), color: 'rgba(255,255,255,.75)'});
+    W / 2, 1004, {size: 18, weight: 400, align: 'center', a: appear(c, 3.0) * (MODE === 'export' ? 1 : 0), color: pa(.7)});
   const fo = ramp(c, ENDCARD_DUR - 1.2, ENDCARD_DUR);
   if (MODE === 'export' && fo > 0) { g.fillStyle = `rgba(0,0,0,${fo})`; g.fillRect(0, 0, W, H); }
 };
@@ -1204,60 +1168,63 @@ function talkFrame(t) {
 function drawBadge(t) {
   if (t < INTRO_END || !TALK.length) return;
   const last = TALK[TALK.length - 1], p = E.io(ramp(t, INTRO_END, INTRO_END + 1.25)), pr = E.out(ramp(t, INTRO_END, INTRO_END + 1.0));
-  let cx = lerp(last.cx, BX, p), cy = lerp(last.cy, BY, p), size = lerp(640, BS, p), R = lerp(980, BR, pr);
+  let cx = lerp(last.cx, BX, p), cy = lerp(last.cy, BY, p), size = lerp(640, BS, p), Rb = lerp(980, BR, pr);
   const q = TL ? E.io(ramp(t, TL.endcard + .8, TL.endcard + 2.0)) : 0;
-  if (q > 0) { cx = lerp(cx, W / 2, q); cy = lerp(cy, 640, q); size = lerp(size, BS * 1.45, q); R = lerp(R, BR * 1.45, q); }
+  if (q > 0) { cx = lerp(cx, W / 2, q); cy = lerp(cy, 660, q); size = lerp(size, BS * 1.5, q); Rb = lerp(Rb, BR * 1.5, q); }
   const fo = MODE === 'export' && TL ? 1 - ramp(t, TL.total - 1.2, TL.total) : 1;
-  const bob = Math.sin(t * 2.1) * 4 * p;
   g.save(); g.globalAlpha = fo;
-  circlePath(cx, cy + bob, R); g.fillStyle = '#000'; g.fill();
-  g.save(); circlePath(cx, cy + bob, R); g.clip(); g.drawImage(TALK[talkFrame(t)].bmp, cx - size / 2, cy + bob - size / 2, size, size); g.restore();
-  g.globalAlpha = fo * pr; g.lineWidth = 6; g.strokeStyle = '#ff8a3d'; circlePath(cx, cy + bob, R); g.stroke();
+  circlePath(cx, cy, Rb); g.fillStyle = '#000'; g.fill();
+  g.save(); circlePath(cx, cy, Rb); g.clip(); g.drawImage(TALK[talkFrame(t)].bmp, cx - size / 2, cy - size / 2, size, size); g.restore();
+  g.globalAlpha = fo * pr; g.lineWidth = 3; g.strokeStyle = PAPER; circlePath(cx, cy, Rb); g.stroke();
   g.restore();
 }
 function drawSubs(t) {
   if (MODE === 'live' && !UI.cc) return;
   const s = TL.subs.find(x => t >= x.a && t < x.b); if (!s) return;
-  g.save(); g.font = '700 40px "Baloo 2"'; g.letterSpacing = '0px';
-  const lines = wrap(s.text, 1250), lh = 50, h = lines.length * lh + 22, wMax = Math.max(...lines.map(l => g.measureText(l).width)) + 44, y0 = 1046 - h;
+  g.save(); g.font = `700 36px ${F_TEXT}`; g.letterSpacing = '0px';
+  const lines = wrap(s.text, 1180), lh = 46, h = lines.length * lh + 26, wMax = Math.max(...lines.map(l => g.measureText(l).width)) + 48, y0 = 1040 - h;
   const a = Math.min(ramp(t, s.a, s.a + .12), 1 - ramp(t, s.b - .12, s.b));
-  g.globalAlpha = a; g.fillStyle = 'rgba(0,0,0,.66)'; g.beginPath(); g.roundRect(W / 2 - wMax / 2, y0, wMax, h, 14); g.fill();
-  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
-  lines.forEach((l, i) => g.fillText(l, W / 2, y0 + 13 + 38 + i * lh));
+  g.globalAlpha = a; g.fillStyle = ia(.9); g.fillRect(W / 2 - wMax / 2, y0, wMax, h);
+  g.fillStyle = PAPER; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+  lines.forEach((l, i) => g.fillText(l, W / 2, y0 + 13 + 35 + i * lh));
   g.restore();
 }
-function drawTopBar() {
-  if (PILL && PILL.a > 0) {
-    g.save(); g.globalAlpha = PILL.a; g.font = '800 26px "Baloo 2"'; g.letterSpacing = '3px';
-    const w = g.measureText(PILL.text).width + 40;
-    g.fillStyle = 'rgba(8,10,24,.75)'; g.strokeStyle = 'rgba(255,138,61,.8)'; g.lineWidth = 2; g.beginPath(); g.roundRect(36, 30, w, 48, 24); g.fill(); g.stroke();
-    g.fillStyle = '#fff'; g.textBaseline = 'middle'; g.fillText(PILL.text, 56, 56); g.restore();
+function drawFurniture() {
+  // running header, top right: where we are in the story
+  if (CHAP) {
+    const txt = CHAP.toUpperCase(), w = measure(txt, 16, 700, false, 2.6);
+    g.save(); g.fillStyle = ia(.75); g.fillRect(R - w - 20, 40, w + 20, 34); g.restore();
+    T(txt, R - 10, 63, {size: 16, ls: 2.6, align: 'right'});
   }
+  if (FIGQ && FIG[FIGQ]) {
+    const m = IMGS[FIGQ] || VIDEOS[FIGQ], txt = `FIG. ${pad2(FIG[FIGQ])}  ·  ${KIND[m.kind]}`, w = measure(txt, 14, 700, false, 2);
+    g.save(); g.fillStyle = ia(.75); g.fillRect(R - w - 20, 80, w + 20, 28); g.restore();
+    T(txt, R - 10, 99, {size: 14, ls: 2, align: 'right', color: m.kind === 'ill' ? RED : PAPER});
+  }
+  // credits, bottom right
   const keys = [...CRED]; if (!keys.length) return;
   const txt = keys.map(k => { const m = IMGS[k] || VIDEOS[k]; return `${m.credit} · ${m.id}`; }).join('   |   ');
-  g.save(); g.font = '600 20px "Baloo 2"'; g.letterSpacing = '0px'; g.textAlign = 'right'; g.textBaseline = 'middle';
-  const w = g.measureText(txt).width + 28; g.fillStyle = 'rgba(0,0,0,.5)'; g.beginPath(); g.roundRect(W - 30 - w, 34, w, 34, 17); g.fill();
-  g.fillStyle = 'rgba(255,255,255,.9)'; g.fillText(txt, W - 44, 52); g.restore();
-  if (STAMPQ && IMGS[STAMPQ]) stamp(IMGS[STAMPQ].kind, W - 30, 80, 'right', 20);
+  g.save(); g.font = `400 15px ${F_TEXT}`; const w = g.measureText(txt).width + 20; g.fillStyle = ia(.7); g.fillRect(R - w, 1047, w, 26); g.restore();
+  T(txt, R - 10, 1065, {size: 15, weight: 400, align: 'right', color: pa(.75)});
 }
 
 /* ---------------- frame ---------------- */
 function drawScene(sc, t) { g.save(); SCN[sc.id](sc, t); g.restore(); }
 function renderFrame(t) {
-  HITS = []; CRED = new Set(); STAMPQ = null; PILL = null;
+  HITS = []; CRED = new Set(); FIGQ = null; CHAP = null;
   const i = sceneIndexAt(t), sc = TL.scenes[i];
   g = G; G.setTransform(1, 0, 0, 1, 0, 0); G.globalAlpha = 1; G.filter = 'none'; G.fillStyle = '#000'; G.fillRect(0, 0, W, H);
   const fp = sc.xf ? ramp(t, sc.t0, sc.t0 + sc.xf) : 1;
   if (fp < 1 && i > 0) {
     drawScene(TL.scenes[i - 1], t);
-    const keepPill = PILL;
+    const keepChap = CHAP, keepFig = FIGQ;
     g = LG; LG.setTransform(1, 0, 0, 1, 0, 0); LG.globalAlpha = 1; LG.filter = 'none'; LG.clearRect(0, 0, W, H);
     drawScene(sc, t);
     g = G; G.globalAlpha = fp; G.drawImage(LAYER, 0, 0); G.globalAlpha = 1;
-    if (!PILL) PILL = keepPill;
+    if (!CHAP) CHAP = keepChap; if (!FIGQ && fp < .5) FIGQ = keepFig;
   } else drawScene(sc, t);
   g = G;
-  drawTopBar();
+  drawFurniture();
   drawBadge(t);
   drawSubs(t);
 }
@@ -1305,11 +1272,11 @@ async function play() {
   if (P.playing) return;
   await ACTX.resume();
   if (P.t >= TL.total - .05) P.t = 0;
-  P.tStart = P.t; P.ctxStart = ACTX.currentTime + .08; schedule(); P.playing = true; updateButtons();
+  P.tStart = P.t; P.ctxStart = ACTX.currentTime + .08; schedule(); P.playing = true; updateButtons(); poke();
 }
-function pause() { if (!P.playing) return; P.t = now(); P.playing = false; stopAudio(); updateButtons(); }
+function pause() { if (!P.playing) return; P.t = now(); P.playing = false; stopAudio(); updateButtons(); poke(); }
 function seekTo(t) { const was = P.playing; if (was) pause(); P.t = clamp(t, 0, TL.total); if (was) play(); }
-function updateButtons() { $('playBtn').textContent = P.playing ? '⏸ Duraklat' : '▶ Oynat'; }
+function updateButtons() { $('playBtn').textContent = P.playing ? 'Pause' : 'Play'; }
 
 function loop() {
   if (!BUSY && TL) {
@@ -1320,6 +1287,7 @@ function loop() {
     $('seek').value = t; $('time').textContent = `${fmtTime(t)} / ${fmtTime(TL.total)}`;
     const ci = sceneIndexAt(t); if ($('chapters').dataset.cur !== String(ci)) { $('chapters').dataset.cur = String(ci); const ch = chapterIndexFor(ci); if (ch >= 0) $('chapters').value = String(ch); }
     updateChips(t);
+    idleCheck();
   }
   requestAnimationFrame(loop);
 }
@@ -1329,27 +1297,27 @@ function stagePoint(e) { const r = CANVAS.getBoundingClientRect(); return [(e.cl
 function hitAt(x, y) { for (let i = HITS.length - 1; i >= 0; i--) { const h = HITS[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h.key; } return null; }
 CANVAS.addEventListener('mousemove', e => { const [x, y] = stagePoint(e); CANVAS.classList.toggle('hot', !!hitAt(x, y)); });
 CANVAS.addEventListener('click', e => { const [x, y] = stagePoint(e); const k = hitAt(x, y); if (k) openInfo(k); });
-let resumeAfter = false;
+let resumeAfter = false, MODAL_CLOSE = null;
 function openModal(html, onClose) {
   resumeAfter = P.playing; pause();
   $('modalBody').innerHTML = html; $('modal').style.display = 'flex'; MODAL_CLOSE = onClose || null;
 }
-let MODAL_CLOSE = null;
 function closeModal() { $('modal').style.display = 'none'; $('modalBody').innerHTML = ''; if (MODAL_CLOSE) MODAL_CLOSE(); MODAL_CLOSE = null; if (resumeAfter) play(); }
+function closeModalSilently() { $('modal').style.display = 'none'; $('modalBody').innerHTML = ''; if (MODAL_CLOSE) MODAL_CLOSE(); MODAL_CLOSE = null; }
 $('modalClose').onclick = closeModal;
 $('modal').addEventListener('click', e => { if (e.target === $('modal')) closeModal(); });
 const esc = s => String(s).replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
 function openInfo(key) {
   const m = IMGS[key] || VIDEOS[key]; if (!m) return;
-  const media = IMGS[key] ? `<img src="assets/img/${m.f}" alt="">` : `<video src="${m.f}" controls playsinline style="width:100%;border-radius:10px"></video>`;
-  openModal(`<div class="info">${media}<div><span class="kind ${m.kind}">${KIND[m.kind]}</span><h3>${esc(m.title)}</h3>
+  const media = IMGS[key] ? `<img src="assets/img/${m.f}" alt="">` : `<video src="${m.f}" controls playsinline></video>`;
+  openModal(`<div class="info">${media}<div><span class="kind ${m.kind}">${KIND[m.kind]}</span>${FIG[key] ? `<span class="fig">FIG. ${pad2(FIG[key])}</span>` : ''}<h3 style="margin-top:18px">${esc(m.title)}</h3>
     <p class="muted">${esc(m.date)}</p><p>${esc(m.desc)}</p><p class="muted">Credit: ${esc(m.credit)} · <a href="${m.url}" target="_blank" rel="noopener">${esc(m.id)}</a></p></div></div>`);
 }
-function chapterIndexFor(sceneIdx) { let best = -1; CHAPTERS.forEach((c, i) => { if (c.si <= sceneIdx) best = i; }); return best; }
 let CHAPTERS = [];
+function chapterIndexFor(sceneIdx) { let best = -1; CHAPTERS.forEach((c, i) => { if (c.si <= sceneIdx) best = i; }); return best; }
 function buildChapters() {
   CHAPTERS = TL.scenes.map((s, si) => ({si, t0: s.t0, name: s.chapter})).filter(c => c.name);
-  $('chapters').innerHTML = CHAPTERS.map((c, i) => `<option value="${i}">${fmtTime(c.t0)} · ${esc(c.name)}</option>`).join('');
+  $('chapters').innerHTML = CHAPTERS.map((c, i) => `<option value="${i}">${fmtTime(c.t0)}  ${esc(c.name)}</option>`).join('');
   $('chapters').onchange = e => seekTo(CHAPTERS[+e.target.value].t0 + .05);
   $('seek').max = TL.total;
 }
@@ -1365,38 +1333,36 @@ $('chipLayers').onclick = () => openLayers();
 $('chipQuake').onclick = () => openInfo('quake');
 $('endPanel').addEventListener('click', e => { const k = e.target.dataset && e.target.dataset.open; if (k) EXPLORE[k](); });
 const EXPLORE = {dig: () => openDig(), then: () => openThenNow(), layers: () => openLayers(), compare: () => openCompare(), quake: () => openInfo('quake'), sources: () => openSources()};
-$('exploreBtn').onclick = () => openModal(`<h3>Explore ✨</h3><p class="muted">Pick something to try. The video waits for you.</p><div class="menu">
-  <button data-x="dig">⛏ Dig like Phoenix</button><button data-x="then">🕰 Then &amp; now</button><button data-x="layers">🌍 Inside Mars</button>
-  <button data-x="compare">📊 Compare the twins</button><button data-x="quake">🎧 Hear the marsquake</button><button data-x="sources">📚 Sources</button></div>`);
-$('modalBody').addEventListener('click', e => { const k = e.target.dataset && e.target.dataset.x; if (k) { const was = resumeAfter; closeModalSilently(); resumeAfter = was; EXPLORE[k](); resumeAfter = was; } });
-function closeModalSilently() { $('modal').style.display = 'none'; $('modalBody').innerHTML = ''; if (MODAL_CLOSE) MODAL_CLOSE(); MODAL_CLOSE = null; }
+$('exploreBtn').onclick = () => openModal(`<h3>Explore</h3><p class="muted">Pick something to try. The documentary waits for you.</p><div class="menu">
+  <button data-x="dig">Dig like Phoenix</button><button data-x="then">Then and now</button><button data-x="layers">Inside Mars</button>
+  <button data-x="compare">Compare the twins</button><button data-x="quake">Hear the marsquake</button><button data-x="sources">Sources</button></div>`);
+$('modalBody').addEventListener('click', e => { const k = e.target.dataset && e.target.dataset.x; if (k) { const was = resumeAfter; closeModalSilently(); EXPLORE[k](); resumeAfter = was; } });
 
 function openDig() {
-  openModal(`<h3>Dig like Phoenix ⛏</h3><p class="muted">Drag across the Martian ground to dig a trench. What is hiding under the soil?</p>
+  openModal(`<h3>Dig like Phoenix</h3><p class="muted">Drag across the Martian ground to dig a trench. What is hiding under the soil?</p>
     <canvas id="digc" width="960" height="540"></canvas>
-    <div class="digbar"><span id="digmsg">Keep digging…</span><button id="digwait" disabled>☀ Wait 4 sols</button></div>`, () => { DIG.stop = true; });
+    <div class="digbar"><span id="digmsg">Keep digging…</span><button id="digwait" disabled>Wait 4 sols</button></div>`, () => { DIG.stop = true; });
   const cv = $('digc'), x = cv.getContext('2d');
   const soil = new OffscreenCanvas(960, 540), sx = soil.getContext('2d'), r = rng(77);
-  sx.fillStyle = '#8a4a2a'; sx.fillRect(0, 150, 960, 390);
-  for (let i = 0; i < 700; i++) { sx.fillStyle = `rgba(${60 + r() * 60},${25 + r() * 25},${12 + r() * 10},${.4 + r() * .5})`; sx.beginPath(); sx.ellipse(r() * 960, 150 + r() * 390, 2 + r() * 7, 2 + r() * 5, 0, 0, 7); sx.fill(); }
+  sx.fillStyle = RED_DEEP; sx.fillRect(0, 150, 960, 390);
+  for (let i = 0; i < 600; i++) { sx.fillStyle = ia(.2 + r() * .3); sx.beginPath(); sx.ellipse(r() * 960, 150 + r() * 390, 2 + r() * 6, 2 + r() * 4, 0, 0, 7); sx.fill(); }
   const chunks = Array.from({length: 26}, () => [40 + r() * 880, 238 + r() * 30, 8 + r() * 14]);
   const DIG = {stop: false, dug: 0, sublimate: 0, found: false};
-  window.DIG = DIG;
   const draw = () => {
     x.clearRect(0, 0, 960, 540);
-    const sky = x.createLinearGradient(0, 0, 0, 150); sky.addColorStop(0, '#b98557'); sky.addColorStop(1, '#e7bf93'); x.fillStyle = sky; x.fillRect(0, 0, 960, 150);
-    x.fillStyle = '#6a3820'; x.fillRect(0, 150, 960, 80);
-    const ice = x.createLinearGradient(0, 230, 0, 540); ice.addColorStop(0, '#eef9ff'); ice.addColorStop(1, '#a5cfe9'); x.fillStyle = ice; x.fillRect(0, 230, 960, 310);
+    x.fillStyle = INK; x.fillRect(0, 0, 960, 150);
+    x.fillStyle = '#5a1810'; x.fillRect(0, 150, 960, 80);
+    x.fillStyle = '#d9d6cd'; x.fillRect(0, 230, 960, 310);
     x.fillStyle = `rgba(255,255,255,${1 - DIG.sublimate})`;
     for (const [cx, cy, rr] of chunks) { x.beginPath(); x.arc(cx, cy, rr, 0, 7); x.fill(); }
     x.drawImage(soil, 0, 0);
-    x.fillStyle = '#1d1d24'; x.font = '700 22px "Baloo 2"'; x.fillText('soil', 14, 180); x.fillText(DIG.found ? 'ice!' : '?', 14, 300);
+    x.fillStyle = PAPER; x.font = `700 18px ${F_TEXT}`; x.fillText('SOIL', 14, 182); x.fillText(DIG.found ? 'ICE BELOW' : '?', 14, 302);
   };
   let down = false;
   const dig = e => { const rc = cv.getBoundingClientRect(), px = (e.clientX - rc.left) * 960 / rc.width, py = (e.clientY - rc.top) * 540 / rc.height; if (py < 150) return;
     sx.globalCompositeOperation = 'destination-out'; sx.beginPath(); sx.arc(px, Math.min(py, 470), 30, 0, 7); sx.fill(); sx.globalCompositeOperation = 'source-over';
     if (py > 220) DIG.dug++;
-    if (!DIG.found && DIG.dug > 25) { DIG.found = true; $('digmsg').textContent = 'You hit something white and hard! Is it ice… or salt?'; $('digwait').disabled = false; }
+    if (!DIG.found && DIG.dug > 25) { DIG.found = true; $('digmsg').textContent = 'You hit something white and hard. Is it ice, or salt?'; $('digwait').disabled = false; }
     draw(); };
   cv.addEventListener('pointerdown', e => { down = true; cv.setPointerCapture(e.pointerId); dig(e); });
   cv.addEventListener('pointermove', e => { if (down) dig(e); });
@@ -1406,19 +1372,19 @@ function openDig() {
     const step = () => { if (DIG.stop) return; const k = clamp((performance.now() - t0) / 2600); DIG.sublimate = k;
       $('digmsg').textContent = `Sol ${1 + Math.min(3, Math.floor(k * 4))}…`; draw();
       if (k < 1) requestAnimationFrame(step);
-      else $('digmsg').innerHTML = '<b>The white chunks vanished!</b> They turned straight into water vapor. Salt can’t do that, so in June 2008 Phoenix’s team concluded they were <b>water ice</b>.'; };
+      else $('digmsg').innerHTML = '<b>The white chunks vanished.</b> They turned straight into water vapor. Salt can’t do that, so in June 2008 Phoenix’s team concluded they were <b>water ice</b>.'; };
     requestAnimationFrame(step);
   };
   draw();
 }
 function openThenNow() {
-  openModal(`<h3>Then &amp; now 🕰</h3><p class="muted">Drag the sliders.</p><div class="grid2">
-    <div><div class="cmp" style="aspect-ratio:1286/1269" id="cmpA"><img src="assets/img/phx-site-2017.jpg" alt=""><img class="top" src="assets/img/phx-site-2008.jpg" alt=""><div class="divider"></div><span class="lab" style="left:10px">July 2008</span><span class="lab" style="right:10px">Dec 2017</span><input type="range" min="0" max="100" value="50"></div>
-      <p class="muted">Phoenix’s landing site seen by HiRISE. Dust slowly covered the dark marks around the lander, heat shield and parachute. · NASA/JPL-Caltech/Univ. of Arizona · <a href="${nasa('PIA22223')}" target="_blank" rel="noopener">PIA22223</a></p></div>
-    <div><div class="cmp" style="aspect-ratio:1920/1120" id="cmpB"><img src="assets/img/ins-final-selfie.jpg" alt=""><img class="top" src="assets/img/ins-first-selfie.jpg" alt=""><div class="divider"></div><span class="lab" style="left:10px">Dec 2018</span><span class="lab" style="right:10px">Apr 2022</span><input type="range" min="0" max="100" value="50"></div>
-      <p class="muted">InSight’s first and final selfies. Look how much dust covers it at the end. · NASA/JPL-Caltech · <a href="${nasa('PIA22876')}" target="_blank" rel="noopener">PIA22876</a>, <a href="${nasa('PIA25287')}" target="_blank" rel="noopener">PIA25287</a></p></div></div>`);
+  openModal(`<h3>Then and now</h3><p class="muted">Drag the sliders.</p><div class="grid2">
+    <div><div class="cmp" style="aspect-ratio:1286/1269" id="cmpA"><img src="assets/img/phx-site-2017.jpg" alt=""><img class="top" src="assets/img/phx-site-2008.jpg" alt=""><div class="divider"></div><span class="lab" style="left:12px">July 2008</span><span class="lab" style="right:12px">Dec 2017</span><input type="range" min="0" max="100" value="50" aria-label="Compare 2008 and 2017"></div>
+      <p class="muted">Phoenix’s landing site seen by HiRISE. Dust slowly covered the dark marks around the lander, heat shield and parachute. NASA/JPL-Caltech/Univ. of Arizona · <a href="${nasa('PIA22223')}" target="_blank" rel="noopener">PIA22223</a></p></div>
+    <div><div class="cmp" style="aspect-ratio:1920/1120" id="cmpB"><img src="assets/img/ins-final-selfie.jpg" alt=""><img class="top" src="assets/img/ins-first-selfie.jpg" alt=""><div class="divider"></div><span class="lab" style="left:12px">Dec 2018</span><span class="lab" style="right:12px">Apr 2022</span><input type="range" min="0" max="100" value="50" aria-label="Compare 2018 and 2022"></div>
+      <p class="muted">InSight’s first and final selfies. Look how much dust covers it at the end. NASA/JPL-Caltech · <a href="${nasa('PIA22876')}" target="_blank" rel="noopener">PIA22876</a>, <a href="${nasa('PIA25287')}" target="_blank" rel="noopener">PIA25287</a></p></div></div>`);
   for (const id of ['cmpA', 'cmpB']) { const box = $(id), top = box.querySelector('.top'), dv = box.querySelector('.divider'), rg = box.querySelector('input');
-    const set = () => { top.style.clipPath = `inset(0 ${100 - rg.value}% 0 0)`; dv.style.left = `calc(${rg.value}% - 2px)`; }; rg.oninput = set; set(); }
+    const set = () => { top.style.clipPath = `inset(0 ${100 - rg.value}% 0 0)`; dv.style.left = `calc(${rg.value}% - 1px)`; }; rg.oninput = set; set(); }
 }
 function openLayers() {
   const info = {
@@ -1426,9 +1392,9 @@ function openLayers() {
     mantle: ['Mantle', 'A thick layer of hot rock between the crust and the core. Quake waves travel through it, and InSight’s data even showed lumps of ancient impact debris scattered inside it.'],
     core: ['Core', 'The center of Mars. Waves from two 2021 marsquakes travelled through it, and InSight confirmed that the core is liquid.'],
   };
-  openModal(`<h3>Inside Mars 🌍</h3><div class="layers"><svg viewBox="0 0 600 600" width="560" height="560" aria-label="Layers of Mars">
-    <circle data-l="crust" cx="300" cy="300" r="280" fill="#a8452a"/><circle data-l="mantle" cx="300" cy="300" r="264" fill="#e07a3c"/><circle data-l="core" cx="300" cy="300" r="150" fill="#ffc35a"/></svg>
-    <div><h3 id="lyT" style="font-size:46px">Tap a layer</h3><p id="lyD">Click the crust, the mantle or the core.</p><p class="muted">Illustration · not to scale (the real crust is much thinner).</p></div></div>`);
+  openModal(`<h3>Inside Mars</h3><div class="layers"><svg viewBox="0 0 600 600" width="560" height="560" aria-label="Layers of Mars">
+    <circle data-l="crust" cx="300" cy="300" r="280" fill="${RED}"/><circle data-l="mantle" cx="300" cy="300" r="262" fill="${RED_DEEP}"/><circle data-l="core" cx="300" cy="300" r="150" fill="${INK}"/></svg>
+    <div><h3 id="lyT" style="font-size:44px">Tap a layer</h3><p id="lyD">Click the crust, the mantle or the core.</p><p class="muted">Illustration, not to scale (the real crust is much thinner).</p></div></div>`);
   $('modalBody').querySelectorAll('circle').forEach(cn => cn.addEventListener('click', () => { const [h, d] = info[cn.dataset.l]; $('lyT').textContent = h; $('lyD').textContent = d; }));
 }
 function openCompare() {
@@ -1436,14 +1402,52 @@ function openCompare() {
     ['Flight time', '295 days', '205 days'], ['Landing site', 'Martian Arctic (68° N)', 'Elysium Planitia, near the equator'], ['Mission ended', 'Nov 2, 2008 (last signal)', 'Dec 15, 2022'],
     ['Launch mass', '670 kg', '694 kg'], ['Landing mass', '~350 kg', '359 kg'], ['Science payload', '59 kg', '50 kg'], ['Width (panels open)', '5.52 m', '6 m'],
     ['Body diameter', '1.5 m', '1.56 m'], ['Height', '2.2 m', '~1 m'], ['Robotic arm', '2.5 m', '1.8 m'], ['Big result', 'Confirmed water ice just below the surface', '1,300+ marsquakes and a liquid core']];
-  openModal(`<h3>Compare the twins 📊</h3><table class="cmpt"><tr><th></th><th>Phoenix</th><th>InSight</th></tr>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table>`);
+  openModal(`<h3>Compare the twins</h3><table class="cmpt"><tr><th></th><th>Phoenix</th><th>InSight</th></tr>${rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table>`);
 }
 function openSources() {
   const items = Object.values(IMGS).filter((m, i, a) => a.findIndex(x => x.f === m.f) === i).map(m => `<li><b>${esc(m.title)}</b> (${KIND[m.kind].toLowerCase()}) · ${esc(m.credit)} · <a href="${m.url}" target="_blank" rel="noopener">${esc(m.id)}</a></li>`);
   const v = VIDEOS.quake;
-  items.push(`<li><b>${esc(v.title)}</b> (real data + sound) · ${esc(v.credit)} · <a href="${v.url}" target="_blank" rel="noopener">${v.id}</a></li>`);
-  openModal(`<h3>Sources 📚</h3><p class="muted">Mission facts: NASA mission pages for InSight and Mars Phoenix (science.nasa.gov). Voice, intro animation and the Allinol character: our team.</p><ul class="src">${items.join('')}</ul>`);
+  items.push(`<li><b>${esc(v.title)}</b> (real data and sound) · ${esc(v.credit)} · <a href="${v.url}" target="_blank" rel="noopener">${v.id}</a></li>`);
+  openModal(`<h3>Sources</h3><p class="muted">Mission facts: NASA mission pages for InSight and Mars Phoenix (science.nasa.gov). Voice, intro animation and the Allinol character: our team.</p><ul class="src">${items.join('')}</ul>`);
 }
+
+/* ---------------- full screen, phones, idle controls ---------------- */
+const isTouch = matchMedia('(pointer: coarse)').matches;
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+const canFS = () => !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+async function toggleFullscreen() {
+  if (fsEl()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+  if (document.body.classList.contains('immersive')) { setImmersive(false); return; }
+  const el = $('app');
+  if (canFS()) {
+    try { await (el.requestFullscreen ? el.requestFullscreen({navigationUI: 'hide'}) : el.webkitRequestFullscreen()); }
+    catch (e) { setImmersive(true); return; }
+    try { await screen.orientation.lock('landscape'); } catch (e) {}
+  } else {
+    // iPhone Safari cannot put a page in full screen: hide the controls and let the picture fill the screen.
+    setImmersive(true);
+  }
+}
+function setImmersive(on) { document.body.classList.toggle('immersive', on); $('fsBtn').textContent = on ? 'Exit full screen' : 'Full screen'; poke(); fit(); }
+function onFSChange() { setImmersive(!!fsEl()); }
+document.addEventListener('fullscreenchange', onFSChange);
+document.addEventListener('webkitfullscreenchange', onFSChange);
+$('fsBtn').onclick = toggleFullscreen;
+let lastPoke = 0;
+function poke() { lastPoke = performance.now(); document.body.classList.remove('idle'); }
+function idleCheck() {
+  const imm = document.body.classList.contains('immersive');
+  if (imm && P.playing && $('modal').style.display !== 'flex' && performance.now() - lastPoke > 2600) document.body.classList.add('idle');
+}
+['pointerdown', 'pointermove', 'keydown', 'touchstart'].forEach(ev => addEventListener(ev, poke, {passive: true}));
+function rotateCheck() {
+  const portrait = matchMedia('(orientation: portrait)').matches;
+  $('rotateHint').style.display = isTouch && portrait && !sessionStorageGet('rotOk') ? 'flex' : 'none';
+}
+function sessionStorageGet(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+function sessionStorageSet(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
+$('rotateOk').onclick = () => { sessionStorageSet('rotOk', '1'); rotateCheck(); };
+addEventListener('orientationchange', () => setTimeout(() => { fit(); rotateCheck(); }, 250));
 
 /* ---------------- controls ---------------- */
 $('playBtn').onclick = () => { $('overlay').style.display = 'none'; P.playing ? pause() : play(); };
@@ -1451,12 +1455,19 @@ $('restartBtn').onclick = () => { $('overlay').style.display = 'none'; seekTo(0)
 $('seek').oninput = e => seekTo(parseFloat(e.target.value));
 $('ccBtn').onclick = e => { UI.cc = !UI.cc; e.currentTarget.setAttribute('aria-pressed', UI.cc); };
 $('soundBtn').onclick = e => { UI.sound = !UI.sound; e.currentTarget.setAttribute('aria-pressed', UI.sound); if (P.master) P.master.gain.value = UI.sound ? 1 : 0; };
-$('startBtn').onclick = () => { $('overlay').style.display = 'none'; seekTo(0); play(); };
-addEventListener('keydown', e => { if (e.code === 'Space' && $('modal').style.display !== 'flex' && !BUSY) { e.preventDefault(); $('playBtn').click(); } if (e.code === 'Escape' && $('modal').style.display === 'flex') closeModal(); });
+$('startBtn').onclick = () => { $('overlay').style.display = 'none'; seekTo(0); play(); if (isTouch && !fsEl()) toggleFullscreen(); };
+addEventListener('keydown', e => {
+  if ($('modal').style.display === 'flex') { if (e.code === 'Escape') closeModal(); return; }
+  if (BUSY) return;
+  if (e.code === 'Space') { e.preventDefault(); $('playBtn').click(); }
+  if (e.code === 'KeyF') toggleFullscreen();
+});
 function fit() { const vp = $('viewport'); const s = Math.min(vp.clientWidth / W, vp.clientHeight / H); $('stageWrap').style.transform = `translate(-50%,-50%) scale(${s})`; }
-addEventListener('resize', fit); fit();
+addEventListener('resize', () => { fit(); rotateCheck(); }); fit(); rotateCheck();
 
-/* ---------------- export: 1920x1080, 60 fps, H.264 + AAC ---------------- */
+/* ---------------- export: 1920x1080, 60 fps, H.264 + AAC (local server only) ---------------- */
+const LOCAL = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+if (LOCAL) $('exportBtn').hidden = false;
 async function renderMix() {
   const sr = 48000, oc = new OfflineAudioContext(2, Math.ceil(TL.total * sr), sr);
   for (const a of TL.audio) {
@@ -1481,8 +1492,6 @@ async function exportMP4(onProgress, opts = {}) {
     if (ok.supported) { codec = cand; break; }
   }
   BUSY = true; pause(); MODE = 'export';
-  // Stream the file to disk through the local server when it is there (keeps memory low);
-  // otherwise build it in memory and hand it to the browser as a download.
   let streaming = false;
   try { streaming = (await fetch('/write?reset=1&pos=0&name=' + encodeURIComponent(name), {method: 'POST', body: new Uint8Array(0)})).ok; } catch (e) { streaming = false; }
   let queue = Promise.resolve(), writeErr = null, written = 0;
@@ -1516,10 +1525,10 @@ async function exportMP4(onProgress, opts = {}) {
     const mix = await renderMix();
     const ae = new AudioEncoder({output: (ch, meta) => muxer.addAudioChunk(ch, meta), error: e => { err = e; }});
     ae.configure({codec: 'mp4a.40.2', sampleRate: 48000, numberOfChannels: 2, bitrate: 192000});
-    const L = mix.getChannelData(0), R = mix.getChannelData(1), s0 = Math.round(from * 48000), s1 = Math.min(mix.length, Math.round(to * 48000));
+    const L = mix.getChannelData(0), Rr = mix.getChannelData(1), s0 = Math.round(from * 48000), s1 = Math.min(mix.length, Math.round(to * 48000));
     for (let off = s0; off < s1; off += 4800) {
       const n = Math.min(4800, s1 - off), data = new Float32Array(n * 2);
-      data.set(L.subarray(off, off + n), 0); data.set(R.subarray(off, off + n), n);
+      data.set(L.subarray(off, off + n), 0); data.set(Rr.subarray(off, off + n), n);
       const ad = new AudioData({format: 'f32-planar', sampleRate: 48000, numberOfFrames: n, numberOfChannels: 2, timestamp: Math.round((off - s0) * 1e6 / 48000), data});
       ae.encode(ad); ad.close();
     }
@@ -1528,23 +1537,15 @@ async function exportMP4(onProgress, opts = {}) {
     muxer.finalize();
     onProgress(.97, 'Saving…');
     let saved = null, bytes = 0;
-    if (streaming) {
-      await queue; if (writeErr) throw writeErr;
-      saved = 'output/' + name; bytes = written;
-    } else {
-      const buf = target.buffer; bytes = buf.byteLength;
-      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], {type: 'video/mp4'})); a.download = name; a.click();
-      saved = '(browser download) ' + name;
-    }
-    if (!opts.from && !opts.to) {
-      try { await fetch('/save?name=' + encodeURIComponent(name.replace(/\.mp4$/, '.srt')), {method: 'POST', body: srt()}); } catch (e) {}
-    }
+    if (streaming) { await queue; if (writeErr) throw writeErr; saved = 'output/' + name; bytes = written; }
+    else { const buf = target.buffer; bytes = buf.byteLength; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([buf], {type: 'video/mp4'})); a.download = name; a.click(); saved = '(browser download) ' + name; }
+    if (!opts.from && !opts.to) { try { await fetch('/save?name=' + encodeURIComponent(name.replace(/\.mp4$/, '.srt')), {method: 'POST', body: srt()}); } catch (e) {} }
     onProgress(1, 'Done', (performance.now() - t0) / 1000);
     return {saved, bytes, frames: N, codec, seconds: (performance.now() - t0) / 1000};
   } finally { BUSY = false; MODE = 'live'; }
 }
 $('exportBtn').onclick = async () => {
-  openModal(`<h3>Exporting MP4…</h3><p class="muted">1920×1080 · 60 fps · H.264 + AAC. Keep this window visible until it finishes.</p><div class="progress"><div id="pb"></div></div><p id="pmsg">Starting…</p>`);
+  openModal(`<h3>Exporting MP4…</h3><p class="muted">1920×1080 · 60 fps · H.264 + AAC. Keep this window open and visible until it finishes.</p><div class="progress"><div id="pb"></div></div><p id="pmsg">Starting…</p>`);
   $('modalClose').style.display = 'none';
   try {
     const r = await exportMP4((p, msg, el) => { $('pb').style.width = (p * 100).toFixed(1) + '%'; $('pmsg').textContent = msg + (el ? ` · ${el.toFixed(0)} s` : ''); });
@@ -1590,7 +1591,7 @@ window.__dbg = {
     $('startBtn').disabled = false;
     requestAnimationFrame(loop);
   } catch (e) {
-    console.error(e); $('loadMsg').textContent = 'Could not load: ' + e.message + ' (open it through tools/server.py)';
+    console.error(e); $('loadMsg').textContent = 'Could not load: ' + e.message;
   }
 })();
 </script>
