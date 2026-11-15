@@ -192,7 +192,7 @@ const pad2 = n => String(n).padStart(2, '0');
 /* ---------------- content ---------------- */
 const HELLO_AT = 2.47;      // the hello recording starts 2.47 s into the team intro (waveforms match)
 const QUAKE_FROM = 3.0, LISTEN_DUR = 10.0, ENDCARD_DUR = 8.0, XF = .45;
-const VOICE_GAIN = 1.25, QUAKE_GAIN = .55;
+const VOICE_GAIN = 1.25, QUAKE_GAIN = .55, SFX_BOOST = 1.8, LIVE_GAIN = .84;   // LIVE_GAIN keeps live playback from clipping, like the export's peak limit
 const BX = 192, BY = 936, BR = 96, BS = 226;   // "Allinol cam" badge, bottom-left on the grid
 
 // d = length the timings below were measured on; if a clip is re-recorded, its
@@ -379,11 +379,15 @@ async function synthSFX() {
   // rocket rumble: low brown noise plus a band of roar
   await render('rumble', 5.0, (c, D) => { const e = env(c, [[0, 0], [.6, 1], [3.8, .9], [5.0, 0]]);
     const b = src(c, mk(c, 5, brown(7))); b.connect(biq(c, 'lowpass', 140)).connect(e);
-    const w = src(c, mk(c, 5, white(8))); w.connect(biq(c, 'bandpass', 420, .6)).connect(gain(c, .12)).connect(e);
-    e.connect(D); b.start(0); w.start(0); });
+    const w = src(c, mk(c, 5, white(8))); w.connect(biq(c, 'bandpass', 500, .5)).connect(gain(c, .45)).connect(e);
+    // crackle in the mid range so small speakers can hear the rocket too
+    const r = rng(41); const k = src(c, mk(c, 5, () => (r() * 2 - 1) * (r() < .04 ? 1 : .25)));
+    k.connect(biq(c, 'bandpass', 1400, .7)).connect(gain(c, .35)).connect(e);
+    e.connect(D); b.start(0); w.start(0); k.start(0); });
   // touchdown: falling low sine with a short burst of dirt
   await render('thump', .9, (c, D) => { const o = osc(c, 'sine', [[0, 72], [.35, 36]]); o.connect(env(c, [[0, 0], [.005, 1], [.7, 1e-4, 1]])).connect(D); o.start(0); o.stop(.9);
-    const n = src(c, mk(c, .3, white(9))); n.connect(biq(c, 'lowpass', 320)).connect(env(c, [[0, 0], [.003, .7], [.14, 1e-4, 1]])).connect(D); n.start(0); });
+    const n = src(c, mk(c, .3, white(9))); n.connect(biq(c, 'bandpass', 600, .6)).connect(env(c, [[0, 0], [.003, 1], [.16, 1e-4, 1]])).connect(D); n.start(0);
+    const o2 = osc(c, 'triangle', [[0, 190], [.25, 110]]); o2.connect(env(c, [[0, 0], [.004, .6], [.3, 1e-4, 1]])).connect(D); o2.start(0); o2.stop(.4); });
   await render('pop', .25, (c, D) => { const o = osc(c, 'sine', [[0, 560], [.08, 180]]); o.connect(env(c, [[0, 0], [.004, 1], [.18, 1e-4, 1]])).connect(D); o.start(0); o.stop(.25); });
   await render('plip', .32, (c, D) => { const o = osc(c, 'sine', [[0, 640], [.06, 1450]]); o.connect(env(c, [[0, 0], [.004, 1], [.24, 1e-4, 1]])).connect(D); o.start(0); o.stop(.32);
     const o2 = osc(c, 'sine', [[0, 1280], [.06, 2900]]); o2.connect(env(c, [[0, 0], [.004, .25], [.12, 1e-4, 1]])).connect(D); o2.start(0); o2.stop(.2); });
@@ -406,13 +410,16 @@ async function synthSFX() {
     const lfo = c.createOscillator(); lfo.frequency.value = 7; lfo.connect(gain(c, .25)).connect(trem.gain);
     const o1 = osc(c, 'sine', [[0, 34]]), o2 = osc(c, 'sine', [[0, 51]]), b = src(c, mk(c, 3, brown(17)));
     o1.connect(trem); o2.connect(gain(c, .6)).connect(trem); b.connect(biq(c, 'lowpass', 90)).connect(gain(c, .8)).connect(trem);
+    // rattle layer (ground shaking) in the range laptop speakers can play
+    const rr = src(c, mk(c, 3, white(43))); rr.connect(biq(c, 'bandpass', 450, .8)).connect(gain(c, 1.4)).connect(trem); rr.start(0);
     trem.connect(e).connect(D); [o1, o2, lfo].forEach(o => { o.start(0); o.stop(3); }); b.start(0); });
   // meteor: falling whoosh, then a muffled boom at 0.8 s
   await render('meteor', 2.2, (c, D) => { const n = src(c, mk(c, 1, white(19))), bp = biq(c, 'bandpass', 3000, 1.2);
     bp.frequency.setValueAtTime(3000, 0); bp.frequency.exponentialRampToValueAtTime(400, .8);
     n.connect(bp).connect(env(c, [[0, 0], [.55, .6], [.8, .15], [.9, 0]])).connect(D); n.start(0);
     const b = src(c, mk(c, 1.4, brown(23))); b.connect(biq(c, 'lowpass', 160)).connect(env(c, [[0, 0], [.8, 0], [.81, 1], [2.2, 1e-4, 1]])).connect(D); b.start(.8);
-    const o = osc(c, 'sine', [[0, 46]]); o.connect(env(c, [[0, 0], [.8, 0], [.81, .8], [2.0, 1e-4, 1]])).connect(D); o.start(.8); o.stop(2.2); });
+    const o = osc(c, 'sine', [[0, 46]]); o.connect(env(c, [[0, 0], [.8, 0], [.81, .8], [2.0, 1e-4, 1]])).connect(D); o.start(.8); o.stop(2.2);
+    const cr = src(c, mk(c, 1.4, white(47))); cr.connect(biq(c, 'bandpass', 700, .6)).connect(env(c, [[0, 0], [.8, 0], [.805, 1], [1.4, 1e-4, 1]])).connect(D); cr.start(.8); });
   // camera shutter: two quick mechanical clicks
   await render('shutter', .3, (c, D) => { const r = white(29);
     const n = src(c, mk(c, .3, t => { const k = a => t >= a ? Math.exp(-(t - a) * 260) : 0; return r() * (k(0) + .8 * k(.085)); }));
@@ -508,27 +515,28 @@ function buildTimeline() {
   subs.sort((a, b) => a.a - b.a); speech.sort((a, b) => a[0] - b[0]);
   // Sound effects: only where something happens on screen. They duck under the voice automatically.
   const ct = (key, x) => at[key] + x * k[key];
-  const fx = (name, t, g, o = {}) => audio.push({key: 'sfx:' + name, at: t, offset: 0, dur: BUF['sfx:' + name].duration, gain: g, duck: .45, ...o});
+  // levels were raised after testing: the first mix was too quiet on laptop and phone speakers
+  const fx = (name, t, g, o = {}) => audio.push({key: 'sfx:' + name, at: t, offset: 0, dur: BUF['sfx:' + name].duration, gain: g * SFX_BOOST, duck: .6, ...o});
   fx('whoosh', INTRO_END - .15, .22);                       // intro shrinks into the Allinol cam
   fx('click', ct('01', 9.78), .3); fx('click', ct('01', 10.58), .3);   // InSight and Phoenix plates
   fx('whoosh', ct('03', .75), .26);                         // zoom into Mars
   fx('rumble', ct('06', -.3), .42, {fadeOut: 1.2});         // Phoenix liftoff
   fx('whoosh', ct('06', 9.2), .2);                          // down on the parachute
-  fx('thump', ct('06', 11.6), .5);                          // landed
+  fx('thump', ct('06', 11.6), 1.1);                          // landed
   fx('pop', ct('07', 2.72), .32);                           // polar bear
   fx('plip', ct('08', 4.5), .32);                           // water drop
   fx('sizzle', ct('08', 13.0), .3);                         // TEGA oven heats up
   fx('scrape', ct('08', 16.5), .4);                         // digging the trench
-  fx('rise', ct('09', 4.5), .12); fx('chime', ct('09', 7.0), .25);    // 151 sols, +61 bonus
+  fx('rise', ct('09', 4.5), .09); fx('chime', ct('09', 7.0), .25);    // 151 sols, +61 bonus
   fx('whoosh', ct('10', 9.9), .18);                         // Mars opens up
   fx('rumble', ct('11', 1.1), .42, {fadeOut: 1.2});         // InSight liftoff
-  fx('thump', ct('12', 3.24), .5);                          // InSight lands
+  fx('thump', ct('12', 3.24), 1.1);                          // InSight lands
   fx('pop', ct('13', 2.25), .32);                           // giraffe
-  fx('quake', ct('14', 18.0), .3);                          // seismogram
-  fx('meteor', ct('14', 26.9), .4);                         // impact lands at +0.8 s
+  fx('quake', ct('14', 18.0), .7);                          // seismogram
+  fx('meteor', ct('14', 26.9), .8);                         // impact lands at +0.8 s
   fx('shutter', ct('15', .3), .35); fx('shutter', ct('15', .7), .35);
   fx('cold', ct('15', 8.7), .3, {fadeIn: .5, fadeOut: .8}); // Phoenix's winter (synthesized)
-  audio.push({key: 'mars-wind', at: ct('15', 11.45), offset: 0, dur: Math.min(4.6, BUF['mars-wind'].duration), gain: .5, duck: .5, fadeIn: .4, fadeOut: 1.0});
+  audio.push({key: 'mars-wind', at: ct('15', 11.45), offset: 0, dur: Math.min(4.6, BUF['mars-wind'].duration), gain: .8, duck: .6, fadeIn: .4, fadeOut: 1.0});
   fx('shutter', ct('15', 14.75), .3); fx('shutter', ct('15', 15.15), .3);
   fx('chimeLow', endcard + .4, .22);
   const flashes = [ct('15', .3), ct('15', .7), ct('15', 14.75), ct('15', 15.15)];
@@ -1399,7 +1407,7 @@ function scheduleInto(ctx, dest, tStart, ctxStart, pick = () => true) {
   return nodes;
 }
 function schedule() {
-  P.master = ACTX.createGain(); P.master.gain.value = UI.sound ? 1 : 0; P.master.connect(ACTX.destination);
+  P.master = ACTX.createGain(); P.master.gain.value = UI.sound ? LIVE_GAIN : 0; P.master.connect(ACTX.destination);
   P.nodes = scheduleInto(ACTX, P.master, P.tStart, P.ctxStart);
 }
 function stopAudio() { for (const n of P.nodes) { try { n.stop(); } catch (e) {} } P.nodes = []; if (P.master) { P.master.disconnect(); P.master = null; } }
@@ -1591,7 +1599,7 @@ $('playBtn').onclick = () => { $('overlay').style.display = 'none'; P.playing ? 
 $('restartBtn').onclick = () => { $('overlay').style.display = 'none'; seekTo(0); if (!P.playing) play(); };
 $('seek').oninput = e => seekTo(parseFloat(e.target.value));
 $('ccBtn').onclick = e => { UI.cc = !UI.cc; e.currentTarget.setAttribute('aria-pressed', UI.cc); };
-$('soundBtn').onclick = e => { UI.sound = !UI.sound; e.currentTarget.setAttribute('aria-pressed', UI.sound); if (P.master) P.master.gain.value = UI.sound ? 1 : 0; };
+$('soundBtn').onclick = e => { UI.sound = !UI.sound; e.currentTarget.setAttribute('aria-pressed', UI.sound); if (P.master) P.master.gain.value = UI.sound ? LIVE_GAIN : 0; };
 $('startBtn').onclick = () => { $('overlay').style.display = 'none'; seekTo(0); play(); if (isTouch && !fsEl()) toggleFullscreen(); };
 addEventListener('keydown', e => {
   if ($('modal').style.display === 'flex') { if (e.code === 'Escape') closeModal(); return; }
@@ -1605,9 +1613,14 @@ addEventListener('resize', () => { fit(); rotateCheck(); }); fit(); rotateCheck(
 /* ---------------- export: 1920x1080, 60 fps, H.264 + AAC (local server only) ---------------- */
 const LOCAL = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
 if (LOCAL) $('exportBtn').hidden = false;
-async function renderMix(pick = () => true, normalize = true) {
+async function renderMix(pick = () => true, normalize = true, hp = 0) {
   const sr = 48000, oc = new OfflineAudioContext(2, Math.ceil(TL.total * sr), sr);
-  scheduleInto(oc, oc.destination, 0, 0, pick);
+  let dest = oc.destination;
+  if (hp) {   // used only for checks: roughly what a laptop or phone speaker can play
+    const f1 = oc.createBiquadFilter(), f2 = oc.createBiquadFilter(); f1.type = f2.type = 'highpass'; f1.frequency.value = f2.frequency.value = hp;
+    f1.connect(f2).connect(oc.destination); dest = f1;
+  }
+  scheduleInto(oc, dest, 0, 0, pick);
   const buf = await oc.startRendering();
   if (normalize) {   // safety: never clip
     let m = 0; for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < d.length; i++) m = Math.max(m, Math.abs(d[i])); }
@@ -1717,9 +1730,9 @@ window.__dbg = {
   exportMP4,
   srt: () => srt(),
   // Loudness check: each effect against the voice in the same 1.5 s window, and the peak of the full mix.
-  async mixStats() {
+  async mixStats(hp = 0) {
     const isVoice = a => CLIPS[a.key] !== undefined;
-    const voice = await renderMix(isVoice, false), fxMix = await renderMix(a => !isVoice(a) && a.key !== 'quake', false), all = await renderMix(() => true, false);
+    const voice = await renderMix(isVoice, false, hp), fxMix = await renderMix(a => !isVoice(a) && a.key !== 'quake', false, hp), all = await renderMix(() => true, false);
     const db = (buf, t0, t1) => { const d = buf.getChannelData(0), s0 = Math.max(0, Math.floor(t0 * 48000)), s1 = Math.min(d.length, Math.floor(t1 * 48000)); let s = 0; for (let i = s0; i < s1; i++) s += d[i] * d[i]; return 10 * Math.log10(s / Math.max(1, s1 - s0) + 1e-12); };
     const peak = buf => { let m = 0; for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < d.length; i++) m = Math.max(m, Math.abs(d[i])); } return m; };
     const rows = TL.audio.filter(a => !isVoice(a) && a.key !== 'quake').map(a => { const w = Math.min(a.dur, 1.5); return [a.key, +a.at.toFixed(2), +db(fxMix, a.at, a.at + w).toFixed(1), +db(voice, a.at, a.at + w).toFixed(1)]; });
